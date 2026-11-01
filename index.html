@@ -1,0 +1,905 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Мастерская</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c93a6b">
+<link rel="icon" href="icon-192.png">
+<style>
+/* Layout: top tab bar, one working panel at a time, export basket as a drawer */
+:root{--bg:#eef1f0;--fg:#16302c;--muted:#5b706b;--card:#fff;--line:#d3dcd9;--accent:#c93a6b;--accent-fg:#fff;--ok:#2f8f5b;--chk1:#fff;--chk2:#e3e8e6;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#121a19;--fg:#e4efec;--muted:#93a9a4;--card:#1a2524;--line:#2c3b39;--accent:#ee7aa0;--accent-fg:#1b0d13;--ok:#58c58a;--chk1:#222d2c;--chk2:#2a3735;color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-inline:max(14px,env(safe-area-inset-left,0px)) max(14px,env(safe-area-inset-right,0px));padding-block:12px 40px;max-width:1100px;margin:0 auto}
+h1{font-size:20px;margin:0}
+h2{font-size:16px;margin:0 0 8px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:10px}
+nav button{white-space:nowrap}
+.btn,button,select,input[type=text],input[type=number],input[type=password]{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-height:44px}
+button{cursor:pointer}
+button.on,.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+button:disabled{opacity:.5}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
+.row>label{display:flex;align-items:center;gap:6px;min-width:0}
+.grid2{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:12px}
+@media (max-width:760px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.muted{color:var(--muted);font-size:13px}
+canvas{max-width:100%;height:auto;display:block;border-radius:6px;touch-action:none}
+.checker{background:conic-gradient(var(--chk2) 25%,var(--chk1) 0 50%,var(--chk2) 0 75%,var(--chk1) 0) 0 0/20px 20px;border-radius:6px;overflow:auto;max-height:70vh}
+.pal{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.sw{border:1px solid var(--line);border-radius:8px;overflow:hidden;cursor:pointer;background:var(--card);padding:0;min-height:0;text-align:left}
+.sw i{display:block;height:44px}
+.sw span{display:block;padding:4px 6px;font-size:12px;font-variant-numeric:tabular-nums}
+.step{border-left:4px solid var(--accent);padding:6px 10px;background:var(--bg);border-radius:0 8px 8px 0;margin-bottom:8px}
+.step b{display:block}
+.steps-list{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.steps-list button{min-height:32px;padding:2px 10px}
+.steps-list button.done{border-color:var(--ok);color:var(--ok)}
+.thumbs{display:flex;flex-wrap:wrap;gap:6px}
+.thumbs img{height:56px;border:1px solid var(--line);border-radius:6px;background:var(--chk2)}
+input[type=range]{width:140px;min-height:32px}
+.drawer{position:fixed;right:max(10px,env(safe-area-inset-right,0px));bottom:max(10px,env(safe-area-inset-bottom,0px));z-index:5;width:min(340px,calc(100vw - 20px))}
+.drawer .card{margin:0;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.drawer.min{width:auto}.drawer.min #bList,.drawer.min #basket>.row:last-child{display:none}.drawer #basket>.row:first-child{cursor:pointer;gap:12px;margin-bottom:0}.drawer:not(.min) #basket>.row:first-child{margin-bottom:4px}
+.drawer ul{list-style:none;margin:0 0 8px;padding:0;max-height:30vh;overflow:auto}
+.drawer li{display:flex;justify-content:space-between;gap:6px;align-items:center;font-size:13px;padding:2px 0}
+.drawer li button{min-height:32px;padding:0 8px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:90px;background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:20px;z-index:9;font-size:14px;max-width:90vw}
+section[hidden]{display:none}
+.sw.m{cursor:default}.sw.m>i{cursor:pointer}.sh{display:flex}.sh b{flex:1;height:22px;cursor:pointer}
+textarea{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px;width:100%;min-height:120px}
+.prj{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.prj .card{margin:0;padding:8px}.prj img{width:100%;border-radius:6px;display:block;margin-bottom:6px;background:var(--chk2)}
+.ai-out{white-space:pre-wrap;font-size:13px}
+</style>
+</head>
+<body>
+<header>
+ <h1>Мастерская</h1>
+ <span class="muted">рисунок · паттерны · цифровые товары</span><button id="instBtn" hidden>Установить</button>
+</header>
+<nav id="tabs">
+ <button data-t="ref" class="on">Референс</button>
+ <button data-t="prep">Подготовка</button>
+ <button data-t="pat">Паттерны</button>
+ <button data-t="mock">Мокапы</button>
+ <button data-t="proj">Проекты</button>
+ <button data-t="shop">Магазин</button>
+ <button data-t="set">Ключи ИИ</button>
+</nav>
+
+<section id="t-ref">
+ <div class="grid2">
+  <div class="card">
+   <div class="row"><input type="file" id="refFile" accept="image/*"></div>
+   <div class="row" id="viewBtns">
+    <button data-v="orig" class="on">Оригинал</button><button data-v="gray">Ч/Б свет</button><button data-v="blobs">Пятна</button><button data-v="edges">Контуры</button><button data-v="sketch">Эскиз</button><button data-v="grid">Клетки</button><button data-v="persp">Перспектива</button>
+   </div>
+   <div class="row" id="viewOpts"></div>
+   <canvas id="refCanvas" width="800" height="500"></canvas>
+   <p class="muted" id="refInfo">Загрузите референс, и справа появятся палитра и шаги.</p>
+  </div>
+  <div>
+   <div class="card"><h2>Палитра</h2>
+    <div class="row"><label>Цветов <input type="range" id="palN" min="4" max="24" value="8"></label><span id="palNv" class="muted">8</span></div>
+    <div class="pal" id="pal"></div>
+    <p class="muted">Нажмите на цвет или оттенок, чтобы скопировать код. Под каждым цветом четыре оттенка: тень, глубокая тень, свет, блик.</p>
+    <div id="palMore"></div>
+    <div class="row"><input type="text" id="serName" placeholder="Название серии" style="flex:1;min-width:120px"><button id="serSave">Сохранить палитру серии</button></div>
+    <div class="row"><button id="palCopy">Скопировать коды</button><button id="palGpl">Файл для Krita (.gpl)</button><button id="palPng">Карточка PNG</button></div>
+    <p class="muted">Карточку PNG откройте в программе как референс и берите цвета пипеткой: так работает в любом приложении.</p>
+   </div>
+   <div class="card"><h2>Пошаговый разбор</h2>
+    <div class="row">
+     <select id="stType"><option value="char">Персонаж</option><option value="land">Пейзаж</option><option value="clip">Клипарт / предмет</option></select>
+     <select id="stLevel"><option value="n">Новичок</option><option value="m">Средний</option></select>
+     <select id="stProg"><option value="krita">Krita</option><option value="penup">PenUp</option><option value="sketchbook">Sketchbook</option><option value="hipaint">Hi Paint</option><option value="infinite">Infinite Painter</option><option value="other">Другая</option></select>
+    </div>
+    <div class="steps-list" id="stList"></div>
+    <div class="step" id="stCur"></div>
+    <div class="row"><button id="stPrev">Назад</button><button id="stNext" class="primary btn">Дальше</button><button id="stSay">Озвучить</button><label><input type="checkbox" id="stAuto"> сам читает</label></div>
+    <div class="row"><select id="aiProf"></select><button id="aiRun">Разбор через ИИ</button><button id="aiSimple">Объясни проще</button></div>
+    <div class="muted ai-out" id="aiOut"></div>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section id="t-prep" hidden>
+ <div class="grid2">
+  <div class="card">
+   <div class="row"><input type="file" id="prepFile" accept="image/*"></div>
+   <div class="checker" id="prepWrap"><canvas id="prepCanvas" width="600" height="400"></canvas></div>
+   <p class="muted" id="prepInfo">Загрузите рисунок. Фон убирается заливкой от краёв, внутренние белые области остаются.</p>
+  </div>
+  <div>
+   <div class="card"><h2>Фон</h2>
+    <div class="row"><label>Режим касания <select id="prepMode"><option value="none">Просмотр</option><option value="pick">Пипетка фона</option><option value="erase">Ластик</option></select></label></div>
+    <div class="row"><label>Цвет фона <input type="color" id="bgCol" value="#ffffff"></label><button id="bgAuto">По углам</button></div>
+    <div class="row"><label>Допуск <input type="range" id="tol" min="0" max="120" value="30"></label></div>
+    <div class="row"><label>Смягчение края <input type="range" id="feather" min="0" max="80" value="25"></label></div>
+    <div class="row"><label><input type="checkbox" id="floodAll"> убрать этот цвет везде</label></div>
+    <div class="row"><label>Ластик <input type="range" id="eraseR" min="4" max="80" value="20"></label></div>
+    <div class="row"><button id="rmBg" class="btn primary">Убрать фон</button><button id="undo">Отменить</button><button id="resetPrep">Сбросить</button></div>
+   </div>
+   <div class="card"><h2>Обработка</h2>
+    <div class="row"><button id="cropBtn">Обрезать поля</button></div>
+    <div class="row"><label>Обводка, px <input type="number" id="olW" value="24" min="2" max="200" style="width:80px"></label><input type="color" id="olCol" value="#ffffff"><button id="olBtn">Белая обводка для стикера</button></div>
+    <div class="row"><label>Длинная сторона, дюймов <input type="number" id="inLong" value="0" min="0" step="0.5" style="width:80px"></label><label>dpi <input type="number" id="dpiP" value="300" style="width:80px"></label></div>
+    <p class="muted" id="printInfo"></p>
+    <div class="row"><button id="addPrep" class="btn primary">PNG в набор</button><button id="dlPrep">Скачать PNG</button></div>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section id="t-pat" hidden>
+ <div class="grid2">
+  <div class="card">
+   <div class="row"><label>Элементы (PNG с прозрачным фоном) <input type="file" id="patFiles" accept="image/*" multiple></label></div>
+   <div class="thumbs" id="patThumbs"></div>
+   <div class="row" style="margin-top:8px"><button id="patUsePrep">Взять рисунок из «Подготовки»</button><button id="patClear">Очистить</button></div>
+   <canvas id="patCanvas" width="900" height="900"></canvas>
+   <div class="row" style="margin-top:8px"><label><input type="checkbox" id="patSeam"> показать стыки плиток</label></div>
+  </div>
+  <div>
+   <div class="card"><h2>Тип паттерна</h2>
+    <div class="row"><select id="patPreset"><option value="kids">Детский</option><option value="flor">Цветочный</option><option value="seas">Сезонный</option></select><select id="patPal"></select></div>
+    <div class="pal" id="patChips"></div>
+    <div class="step" id="patHint" style="margin-top:8px"></div>
+   </div>
+   <div class="card"><h2>Раскладка</h2>
+    <div class="row"><select id="patLayout"><option value="rand">Вразброс, равномерно</option><option value="grid">Сетка</option><option value="drop">Со сдвигом по колонкам</option><option value="brick">Кирпичная</option></select></div>
+    <div class="row"><label>Элементов <input type="range" id="patN" min="4" max="60" value="16"></label></div>
+    <div class="row"><label>Размер, % <input type="range" id="patSize" min="6" max="40" value="16"></label></div>
+    <div class="row"><label>Поворот, ° <input type="range" id="patRot" min="0" max="180" value="25"></label></div>
+    <div class="row"><label><input type="checkbox" id="patFill" checked> мелкие заполнители</label><label><input type="checkbox" id="patFlip" checked> зеркалить</label></div>
+    <div class="row"><label>Фон <input type="color" id="patBg" value="#ffefb5"></label><label>Дюймов <input type="number" id="patIn" value="12" min="2" max="24" style="width:70px"></label><label>dpi <input type="number" id="patDpi" value="300" style="width:70px"></label></div>
+    <div class="row"><button id="patGo" class="btn primary">Собрать</button><button id="patSeed">Другой вариант</button></div>
+    <div class="row"><button id="patAddPng">Плитка PNG в набор</button><button id="patAddJpg">JPG в набор</button></div>
+    <p class="muted" id="patInfo"></p>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section id="t-mock" hidden>
+ <div class="grid2">
+  <div class="card"><canvas id="mockCanvas" width="1000" height="1000"></canvas></div>
+  <div>
+   <div class="card"><h2>Превью для витрины</h2>
+    <div class="row"><label>Тип <select id="mkKind"><option value="stack">Стопка листов</option><option value="grid">Сетка клипартов</option><option value="cover">Обложка набора</option></select></label></div>
+    <div class="row"><label>Формат <select id="mkSize"><option value="2000x2000">Квадрат 2000×2000</option><option value="1500x2250">Вертикальный 1500×2250</option><option value="2250x1500">Горизонтальный 2250×1500</option></select></label></div>
+    <div class="row"><input type="text" id="mkTitle" value="Нежные звери" style="flex:1;min-width:140px"></div>
+    <div class="row"><input type="text" id="mkSub" value="Цифровая бумага · 12×12 in · 300 dpi" style="flex:1;min-width:140px"></div>
+    <div class="row"><label>Фон <input type="color" id="mkBg" value="#e8eef0"></label><label>Акцент <input type="color" id="mkAcc" value="#c93a6b"></label></div>
+    <p class="muted">Листы берутся из последнего паттерна, клипарты из элементов паттерна и из «Подготовки».</p>
+    <div class="row"><button id="mkGo" class="btn primary">Собрать</button><button id="mkAdd">JPG в набор</button></div>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section id="t-proj" hidden>
+ <div class="card"><h2>Проекты</h2>
+  <div class="row"><input type="text" id="prName" placeholder="Название проекта" style="flex:1;min-width:160px"><button id="prSave" class="btn primary">Сохранить текущий</button></div>
+  <p class="muted">Сохраняются референс (уменьшенный до 1000 px), палитра, шаги, настройки вида и паттерна. Элементы паттерна и ключи не сохраняются.</p>
+  <div class="row"><button id="prExport">Резервная копия (файл)</button><label class="btn" style="display:inline-flex;align-items:center">Восстановить <input type="file" id="prImport" accept=".json" hidden></label></div>
+ </div>
+ <div class="prj" id="prList"></div>
+</section>
+
+<section id="t-shop" hidden>
+ <div class="grid2">
+  <div class="card"><h2>Данные товара</h2>
+   <div class="row"><select id="shType"><option value="clip">Клипарты</option><option value="paper">Цифровая бумага</option><option value="pat">Бесшовный паттерн</option><option value="bundle">Набор: клипарты и бумага</option></select><select id="shLang"><option value="en">Английский</option><option value="ru">Русский</option></select></div>
+   <div class="row"><input type="text" id="shTheme" placeholder="Тема, например: baby animals" style="flex:1;min-width:160px"></div>
+   <div class="row"><input type="text" id="shStyle" placeholder="Стиль: cute, watercolor, pastel" style="flex:1;min-width:160px"></div>
+   <div class="row"><label>Файлов <input type="number" id="shN" value="12" min="1" style="width:80px"></label><label><input type="checkbox" id="shComm"> упомянуть коммерческое использование</label></div>
+   <div class="row"><button id="shGo" class="btn primary">Составить</button><button id="shAi">Улучшить через ИИ</button></div>
+   <p class="muted">Если в «Наборе для экспорта» уже есть файлы, их число и форматы подставятся сами. Коммерческую лицензию включайте только если вы действительно её даёте, и впишите её условия сами. Правила площадки (длина названия, число тегов) проверьте перед публикацией.</p>
+  </div>
+  <div>
+   <div class="card"><h2>Названия</h2><div id="shTitles"></div></div>
+   <div class="card"><h2>Описание</h2><textarea id="shDesc"></textarea><div class="row" style="margin-top:6px"><button id="shCopyD">Скопировать описание</button></div></div>
+   <div class="card"><h2>Теги</h2><div class="row" id="shTags"></div><button id="shCopyT">Скопировать теги</button></div>
+  </div>
+ </div>
+</section>
+
+<section id="t-set" hidden>
+ <div class="card"><h2>Хранилище ключей</h2>
+  <p class="muted">Ключи шифруются вашим паролем (AES-256) и лежат только в браузере этого планшета. Через 15 минут без действий хранилище закрывается. Пароль нигде не сохраняется: если забудете, ключи придётся ввести заново.</p>
+  <div class="row"><input type="password" id="vaultPw" placeholder="Пароль хранилища" autocomplete="off"><button id="vaultOpen" class="btn primary">Открыть</button><button id="vaultLock">Закрыть</button><button id="vaultWipe">Стереть всё</button></div>
+  <p id="vaultState" class="muted"></p>
+ </div>
+ <div class="card" id="profForm"><h2>Добавить профиль модели</h2>
+  <div class="row"><input type="text" id="pName" placeholder="Название, например: Claude основной"><select id="pKind"><option value="anthropic">Anthropic (Claude)</option><option value="openai">OpenAI-совместимый</option></select></div>
+  <div class="row"><input type="text" id="pModel" placeholder="Модель" value="claude-sonnet-5-5"><input type="text" id="pBase" placeholder="Адрес API (пусто = стандартный)" style="flex:1;min-width:200px"></div>
+  <div class="row"><input type="password" id="pKey" placeholder="API-ключ" autocomplete="off" style="flex:1;min-width:200px"><button id="pAdd" class="btn primary">Сохранить</button></div>
+  <p class="muted">Для OpenAI-совместимых сервисов укажите адрес вида https://api.openai.com/v1 и название модели с поддержкой картинок. Заведите отдельный ключ только для этого приложения и поставьте лимит расходов в кабинете провайдера.</p>
+ </div>
+ <div class="card"><h2>Сохранённые профили</h2><div id="profList" class="muted">Хранилище закрыто.</div></div>
+</section>
+
+<div class="drawer"><div class="card" id="basket">
+ <div class="row" style="margin-bottom:4px"><b>Набор для экспорта</b><span class="muted" id="bCount">0</span></div>
+ <ul id="bList"></ul>
+ <div class="row"><input type="text" id="packName" value="pack" style="flex:1;min-width:100px"><button id="zipBtn" class="btn primary">ZIP</button></div>
+</div></div>
+<div id="toast" hidden></div>
+<script>
+/* ===== core ===== */
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function toast(m,ms=2200){const t=$('toast');t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,ms)}
+function loadImg(src){return new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error('Не удалось открыть изображение'));i.src=src})}
+async function fileImg(f){const u=URL.createObjectURL(f);try{return await loadImg(u)}finally{setTimeout(()=>URL.revokeObjectURL(u),5000)}}
+const toBlob=(c,type='image/png',q=.92)=>new Promise(r=>c.toBlob(r,type,q));
+function mkCanvas(w,h){const c=document.createElement('canvas');c.width=Math.max(1,Math.round(w));c.height=Math.max(1,Math.round(h));return c}
+function fitDraw(img,maxSide){const s=Math.min(1,maxSide/Math.max(img.width,img.height));const c=mkCanvas(img.width*s,img.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);return c}
+const hex=(r,g,b)=>'#'+[r,g,b].map(v=>Math.round(clamp(v,0,255)).toString(16).padStart(2,'0')).join('');
+const hexRgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const lum=(r,g,b)=>.2126*r+.7152*g+.0722*b;
+function rng(seed){let s=seed>>>0||1;return()=>{s^=s<<13;s>>>=0;s^=s>>>17;s^=s<<5;s>>>=0;return s/4294967296}}
+function copyText(t){if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>toast('Скопировано '+t),()=>toast(t));else toast(t)}
+
+/* ===== crc / dpi / zip ===== */
+const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(b,s=0xFFFFFFFF,fin=true){let c=s;for(let i=0;i<b.length;i++)c=CRC[(c^b[i])&255]^(c>>>8);return fin?(c^0xFFFFFFFF)>>>0:c}
+async function setDpi(blob,dpi){
+ const b=new Uint8Array(await blob.arrayBuffer());
+ if(blob.type==='image/png'){
+  const ppm=Math.round(dpi/0.0254),d=new Uint8Array(21),dv=new DataView(d.buffer);
+  dv.setUint32(0,9);d.set([0x70,0x48,0x59,0x73],4);dv.setUint32(8,ppm);dv.setUint32(12,ppm);d[16]=1;
+  dv.setUint32(17,crc32(d.subarray(4,17)));
+  const out=new Uint8Array(b.length+21);out.set(b.subarray(0,33));out.set(d,33);out.set(b.subarray(33),54);
+  return new Blob([out],{type:'image/png'});
+ }
+ if(blob.type==='image/jpeg'){
+  if(b[2]===0xFF&&b[3]===0xE0&&b[6]===0x4A){b[13]=1;b[14]=dpi>>8;b[15]=dpi&255;b[16]=dpi>>8;b[17]=dpi&255;return new Blob([b],{type:'image/jpeg'})}
+  const j=new Uint8Array([0xFF,0xE0,0,16,0x4A,0x46,0x49,0x46,0,1,1,1,dpi>>8,dpi&255,dpi>>8,dpi&255,0,0]);
+  const out=new Uint8Array(b.length+18);out.set(b.subarray(0,2));out.set(j,2);out.set(b.subarray(2),20);return new Blob([out],{type:'image/jpeg'});
+ }
+ return blob;
+}
+async function makeZip(files){
+ const enc=new TextEncoder(),parts=[],cd=[];let off=0;
+ for(const f of files){
+  const name=enc.encode(f.name),data=new Uint8Array(await f.blob.arrayBuffer()),crc=crc32(data);
+  const h=new DataView(new ArrayBuffer(30));
+  h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(10,0,true);h.setUint16(12,0x21,true);
+  h.setUint32(14,crc,true);h.setUint32(18,data.length,true);h.setUint32(22,data.length,true);h.setUint16(26,name.length,true);
+  parts.push(h.buffer,name,data);
+  const c=new DataView(new ArrayBuffer(46));
+  c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);c.setUint16(14,0x21,true);
+  c.setUint32(16,crc,true);c.setUint32(20,data.length,true);c.setUint32(24,data.length,true);c.setUint16(28,name.length,true);c.setUint32(42,off,true);
+  cd.push(c.buffer,name);off+=30+name.length+data.length;
+ }
+ let cs=0;for(const p of cd)cs+=p.byteLength||p.length;
+ const e=new DataView(new ArrayBuffer(22));
+ e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cs,true);e.setUint32(16,off,true);
+ return new Blob([...parts,...cd,e.buffer],{type:'application/zip'});
+}
+function saveBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),10000)}
+
+/* ===== basket ===== */
+const basket=[];
+function basketAdd(name,blob){
+ let n=name,k=2;while(basket.some(b=>b.name===n)){n=name.replace(/(\.[a-z]+)$/,'-'+k+'$1');k++}
+ basket.push({name:n,blob});drawBasket();toast('В наборе: '+n);
+}
+function drawBasket(){
+ $('bCount').textContent=basket.length+' файл.';
+ const ul=$('bList');ul.innerHTML='';
+ basket.forEach((b,i)=>{const li=document.createElement('li');const s=document.createElement('span');s.textContent=b.name+' ('+Math.round(b.blob.size/1024)+' КБ)';
+  const x=document.createElement('button');x.textContent='×';x.setAttribute('aria-label','Убрать');x.onclick=()=>{basket.splice(i,1);drawBasket()};li.append(s,x);ul.appendChild(li)});
+}
+$('zipBtn').onclick=async()=>{
+ if(!basket.length)return toast('Набор пуст');
+ const z=await makeZip(basket);saveBlob(z,($('packName').value.trim()||'pack')+'.zip');
+};
+drawBasket();
+
+/* ===== tabs ===== */
+$('tabs').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+ document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));
+ document.querySelectorAll('section[id^=t-]').forEach(s=>s.hidden=s.id!=='t-'+b.dataset.t);
+ if(b.dataset.t==='mock')drawMock();
+};
+
+/* ===== reference: palette ===== */
+let refImg=null,refCanvasSrc=null,palette=[],view='orig';
+const gs={skBlur:2,skSens:60,skThick:1,skCol:'#3b82f6',skGhost:true,cols:12,levels:4,detail:90,edge:60,persp:{type:2,hy:.45,v1:.12,v2:.88,v3x:.5,v3y:1.4},gray:false};
+function getPalette(c,k){
+ const s=Math.min(1,64/Math.max(c.width,c.height)),sc=mkCanvas(c.width*s,c.height*s),x=sc.getContext('2d');x.drawImage(c,0,0,sc.width,sc.height);
+ const d=x.getImageData(0,0,sc.width,sc.height).data,px=[];
+ for(let i=0;i<d.length;i+=4)if(d[i+3]>128)px.push([d[i],d[i+1],d[i+2]]);
+ if(!px.length)return[];
+ const r=rng(7);let cen=[px[Math.floor(r()*px.length)].slice()];
+ while(cen.length<k){let best=null,bd=-1;for(let t=0;t<30;t++){const p=px[Math.floor(r()*px.length)];let m=1e9;for(const c2 of cen){const dd=(p[0]-c2[0])**2+(p[1]-c2[1])**2+(p[2]-c2[2])**2;if(dd<m)m=dd}if(m>bd){bd=m;best=p}}cen.push(best.slice())}
+ let cnt=[];
+ for(let it=0;it<10;it++){
+  const sum=cen.map(()=>[0,0,0,0]);
+  for(const p of px){let bi=0,bd=1e9;for(let j=0;j<cen.length;j++){const c2=cen[j],dd=(p[0]-c2[0])**2+(p[1]-c2[1])**2+(p[2]-c2[2])**2;if(dd<bd){bd=dd;bi=j}}const s2=sum[bi];s2[0]+=p[0];s2[1]+=p[1];s2[2]+=p[2];s2[3]++}
+  cnt=sum.map(s2=>s2[3]);cen=cen.map((c2,j)=>sum[j][3]?[sum[j][0]/sum[j][3],sum[j][1]/sum[j][3],sum[j][2]/sum[j][3]]:c2);
+ }
+ const tot=cnt.reduce((a,b)=>a+b,0)||1;
+ return cen.map((c2,j)=>({rgb:c2,hex:hex(...c2),pct:cnt[j]/tot*100,l:lum(...c2)})).filter(p=>p.pct>0.4).sort((a,b)=>b.pct-a.pct);
+}
+/* hsl helpers + extended palette */
+function rgb2hsl(r,g,b){r/=255;g/=255;b/=255;const M=Math.max(r,g,b),m=Math.min(r,g,b),l=(M+m)/2;let h=0,s=0;if(M!==m){const d=M-m;s=l>.5?d/(2-M-m):d/(M+m);h=M===r?(g-b)/d+(g<b?6:0):M===g?(b-r)/d+2:(r-g)/d+4;h*=60}return[h,s,l]}
+function hsl2hex(h,s,l){h=((h%360)+360)%360;const a=s*Math.min(l,1-l),f=n=>{const k=(n+h/30)%12;return l-a*Math.max(-1,Math.min(k-3,9-k,1))};return hex(f(0)*255,f(8)*255,f(4)*255)}
+function toward(h,t,amt){let d=((t-h+540)%360)-180;return h+Math.sign(d)*Math.min(Math.abs(d),amt)}
+function shadesOf(p){const[h,s,l]=rgb2hsl(...p.rgb);return[
+ ['тень',hsl2hex(toward(h,250,14),Math.min(1,s*1.05),l*.68)],
+ ['глубокая тень',hsl2hex(toward(h,255,22),Math.min(1,s*1.05),l*.42)],
+ ['свет',hsl2hex(toward(h,50,12),s*.95,l+(1-l)*.42)],
+ ['блик',hsl2hex(toward(h,55,16),s*.7,l+(1-l)*.75)]]}
+let palFocus=0;
+function drawPalette(){
+ const el=$('pal');el.innerHTML='';
+ palette.forEach((p,i)=>{const d=document.createElement('div');d.className='sw m';
+  const sh=shadesOf(p);p.shades=sh;
+  d.innerHTML='<i style="background:'+p.hex+'"></i><div class="sh">'+sh.map(x=>'<b style="background:'+x[1]+'" title="'+x[0]+' '+x[1].toUpperCase()+'" data-c="'+x[1]+'"></b>').join('')+'</div><span>'+p.hex.toUpperCase()+' · '+p.pct.toFixed(0)+'%<br>'+(p.l<85?'тёмный':p.l<170?'средний':'светлый')+'</span>';
+  d.querySelector('i').onclick=()=>{palFocus=i;copyText(p.hex);drawHarmony()};
+  d.querySelectorAll('b').forEach(b=>b.onclick=()=>copyText(b.dataset.c));
+  el.appendChild(d)});
+ drawHarmony();
+}
+function drawHarmony(){
+ const m=$('palMore');m.innerHTML='';const p=palette[palFocus];if(!p)return;
+ const[h,s,l]=rgb2hsl(...p.rgb),sets=[['Контрастный к '+p.hex.toUpperCase(),[h+180]],['Родственные',[h-30,h+30]],['Триада',[h+120,h+240]]];
+ const box=document.createElement('div');box.className='row';box.style.alignItems='flex-start';
+ sets.forEach(([t,hs])=>{const w=document.createElement('div');w.innerHTML='<div class="muted">'+t+'</div>';const r=document.createElement('div');r.className='row';
+  hs.forEach(hh=>{const c=hsl2hex(hh,Math.max(.25,s),clamp(l,.35,.7));const b=document.createElement('button');b.style.cssText='background:'+c+';min-height:36px;min-width:72px;font-size:11px';b.textContent=c.toUpperCase();b.onclick=()=>copyText(c);r.appendChild(b)});w.appendChild(r);box.appendChild(w)});
+ m.appendChild(box);
+}
+function flatPalette(){const a=[];palette.forEach((p,i)=>{a.push([p.hex,'цвет '+(i+1)]);(p.shades||[]).forEach(x=>a.push([x[1],'цвет '+(i+1)+' '+x[0]]))});return a}
+$('palCopy').onclick=()=>{if(!palette.length)return toast('Нет палитры');copyText(palette.map(p=>p.hex.toUpperCase()).join(' '))};
+$('palGpl').onclick=()=>{if(!palette.length)return toast('Нет палитры');const nm=$('serName').value.trim()||'Masterskaya';let t='GIMP Palette\nName: '+nm+'\nColumns: 5\n#\n';flatPalette().forEach(([h,n])=>{const[r,g,b]=hexRgb(h);t+=String(r).padStart(3)+' '+String(g).padStart(3)+' '+String(b).padStart(3)+'\t'+n+' '+h.toUpperCase()+'\n'});saveBlob(new Blob([t],{type:'text/plain'}),'palette.gpl');toast('Файл palette.gpl скачан: в Krita откройте Наборы палитр → Импорт')};
+$('palPng').onclick=async()=>{
+ if(!palette.length)return toast('Нет палитры');
+ const n=palette.length,cw=200,W=cw*n,H=520,c=mkCanvas(W,H),x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);x.textAlign='center';x.font='bold 22px system-ui';
+ palette.forEach((p,i)=>{const cols=[[p.hex,'основа'],...(p.shades||[]).map(a=>[a[1],a[0]])];cols.forEach(([h,nm],k)=>{const y=k===0?0:200+(k-1)*80,hh=k===0?200:80;x.fillStyle=h;x.fillRect(i*cw,y,cw,hh);x.fillStyle=lum(...hexRgb(h))>140?'#000':'#fff';x.fillText(h.toUpperCase(),i*cw+cw/2,y+hh/2+8)})});
+ saveBlob(await toBlob(c),'palette-card.png');
+};
+$('serSave').onclick=()=>{const nm=$('serName').value.trim();if(!nm)return toast('Введите название серии');if(!palette.length)return toast('Нет палитры');
+ const all=JSON.parse(localStorage.getItem('artstudio.series')||'{}');all[nm]=palette.slice(0,8).map(p=>p.hex);try{localStorage.setItem('artstudio.series',JSON.stringify(all))}catch{return toast('Браузер не даёт сохранить')}
+ if(window.loadSeries)loadSeries();toast('Палитра серии «'+nm+'» сохранена и доступна в паттернах')};
+$('palN').oninput=()=>{$('palNv').textContent=$('palN').value;if(refCanvasSrc){palette=getPalette(refCanvasSrc,+$('palN').value);palFocus=0;drawPalette();renderStep();if(view==='blobs')renderRef()}};
+$('refFile').onchange=async e=>{
+ const f=e.target.files[0];if(!f)return;
+ try{refImg=await fileImg(f)}catch(err){return toast(err.message)}
+ refCanvasSrc=fitDraw(refImg,1000);palette=getPalette(refCanvasSrc,+$('palN').value);drawPalette();
+ $('refInfo').textContent='Референс '+refImg.width+'×'+refImg.height+' px. Переключайте виды над рисунком.';
+ stDone=new Set();stIdx=0;stSteps=null;buildSteps();renderRef();
+};
+$('viewBtns').onclick=e=>{const b=e.target.closest('button');if(!b)return;view=b.dataset.v;
+ document.querySelectorAll('#viewBtns button').forEach(x=>x.classList.toggle('on',x===b));viewOpts();renderRef()};
+function slider(label,key,min,max,step=1){
+ const l=document.createElement('label');l.append(label+' ');const i=document.createElement('input');i.type='range';i.min=min;i.max=max;i.step=step;i.value=gs[key];
+ i.oninput=()=>{gs[key]=+i.value;renderRef()};l.appendChild(i);return l;
+}
+function viewOpts(){
+ const o=$('viewOpts');o.innerHTML='';
+ if(view==='gray')o.append(slider('Ступеней света','levels',2,8));
+ if(view==='blobs')o.append(slider('Детальность','detail',24,200));
+ if(view==='edges')o.append(slider('Чувствительность','edge',10,200));
+ if(view==='sketch'){o.append(slider('Упрощение','skBlur',0,8,.5),slider('Чувствительность','skSens',15,160),slider('Толщина','skThick',0,4,.5));
+  const cs=document.createElement('input');cs.type='color';cs.value=gs.skCol;cs.onchange=()=>{gs.skCol=cs.value;renderRef()};
+  const gl=document.createElement('label'),gc=document.createElement('input');gc.type='checkbox';gc.checked=gs.skGhost;gc.onchange=()=>{gs.skGhost=gc.checked;renderRef()};gl.append(gc,' подложка');
+  const ab=document.createElement('button');ab.className='btn primary';ab.textContent='Эскиз PNG в набор';ab.onclick=addSketch;
+  const db=document.createElement('button');db.textContent='Скачать эскиз';db.onclick=()=>addSketch(true);o.append(cs,gl,ab,db)}
+ if(view==='grid'){o.append(slider('Клеток по ширине','cols',3,40));
+  const l=document.createElement('label'),c=document.createElement('input');c.type='checkbox';c.checked=gs.gray;c.onchange=()=>{gs.gray=c.checked;renderRef()};l.append(c,' в ч/б');o.append(l)}
+ if(view==='persp'){const s=document.createElement('select');[[1,'1 точка схода'],[2,'2 точки схода'],[3,'3 точки схода']].forEach(([v,t])=>{const op=new Option(t,v);if(v===gs.persp.type)op.selected=true;s.add(op)});
+  s.onchange=()=>{gs.persp.type=+s.value;renderRef()};o.append(s);const p=document.createElement('span');p.className='muted';p.textContent='Тяните горизонт и точки пальцем';o.append(p)}
+}
+function renderRef(){
+ if(!refCanvasSrc)return;
+ const c=$('refCanvas'),W=refCanvasSrc.width,H=refCanvasSrc.height;c.width=W;c.height=H;const x=c.getContext('2d');
+ x.drawImage(refCanvasSrc,0,0);
+ if(view==='orig')return;
+ const id=x.getImageData(0,0,W,H),d=id.data;
+ if(view==='gray'){const L=gs.levels;for(let i=0;i<d.length;i+=4){const g=lum(d[i],d[i+1],d[i+2])/255;const q=Math.min(L-1,Math.floor(g*L))/(L-1)*255;d[i]=d[i+1]=d[i+2]=q}x.putImageData(id,0,0)}
+ else if(view==='blobs'){
+  const w=gs.detail,h=Math.max(1,Math.round(w*H/W)),sc=mkCanvas(w,h),sx=sc.getContext('2d');sx.drawImage(refCanvasSrc,0,0,w,h);
+  const sd=sx.getImageData(0,0,w,h),a=sd.data;
+  for(let i=0;i<a.length;i+=4){let bi=0,bd=1e9;for(let j=0;j<palette.length;j++){const p=palette[j].rgb,dd=(a[i]-p[0])**2+(a[i+1]-p[1])**2+(a[i+2]-p[2])**2;if(dd<bd){bd=dd;bi=j}}const p=palette[bi]?.rgb||[0,0,0];a[i]=p[0];a[i+1]=p[1];a[i+2]=p[2];a[i+3]=255}
+  sx.putImageData(sd,0,0);x.imageSmoothingEnabled=false;x.drawImage(sc,0,0,W,H);
+ }
+ else if(view==='edges'){
+  const g=new Float32Array(W*H);for(let i=0;i<W*H;i++)g[i]=lum(d[i*4],d[i*4+1],d[i*4+2]);
+  const th=gs.edge;for(let y=0;y<H;y++)for(let xx=0;xx<W;xx++){const i=y*W+xx;let v=255;
+   if(y>0&&xx>0&&y<H-1&&xx<W-1){const gx=-g[i-W-1]-2*g[i-1]-g[i+W-1]+g[i-W+1]+2*g[i+1]+g[i+W+1],gy=-g[i-W-1]-2*g[i-W]-g[i-W+1]+g[i+W-1]+2*g[i+W]+g[i+W+1];const m=Math.hypot(gx,gy);v=255-clamp((m-th*.4)*(255/(th*2)),0,255)}
+   d[i*4]=d[i*4+1]=d[i*4+2]=v;d[i*4+3]=255}
+  x.putImageData(id,0,0);
+ }
+ else if(view==='grid'){
+  if(gs.gray){for(let i=0;i<d.length;i+=4){const g=lum(d[i],d[i+1],d[i+2]);d[i]=d[i+1]=d[i+2]=g}x.putImageData(id,0,0)}
+  const cs=W/gs.cols,rows=Math.ceil(H/cs),fs=Math.max(10,cs*.28);
+  x.lineWidth=Math.max(1,W/700);x.strokeStyle='rgba(255,255,255,.9)';x.beginPath();
+  for(let i=0;i<=gs.cols;i++){x.moveTo(i*cs,0);x.lineTo(i*cs,H)}for(let j=0;j<=rows;j++){x.moveTo(0,j*cs);x.lineTo(W,j*cs)}x.stroke();
+  x.strokeStyle='rgba(0,0,0,.55)';x.setLineDash([cs*.15,cs*.15]);x.stroke();x.setLineDash([]);
+  x.font='bold '+fs+'px system-ui';x.textBaseline='top';
+  for(let i=0;i<gs.cols;i++){const t=String.fromCharCode(65+i%26)+(i>=26?'2':'');x.fillStyle='#000';x.fillText(t,i*cs+4,3);x.fillStyle='#fff';x.fillText(t,i*cs+3,2)}
+  for(let j=0;j<rows;j++){x.fillStyle='#000';x.fillText(j+1,4,j*cs+fs+4);x.fillStyle='#fff';x.fillText(j+1,3,j*cs+fs+3)}
+  $('refInfo').textContent='Клетка: '+Math.round(cs)+' px на референсе, сетка '+gs.cols+'×'+rows+'. Расчертите такую же сетку в Krita (Вид → Показать → Сетка) и переносите по клеткам.';
+ }
+ else if(view==='sketch'){x.fillStyle='#fff';x.fillRect(0,0,W,H);if(gs.skGhost){x.globalAlpha=.22;x.drawImage(refCanvasSrc,0,0);x.globalAlpha=1}x.drawImage(makeSketch(refCanvasSrc,gs.skBlur,gs.skSens,gs.skThick,gs.skCol),0,0);
+  $('refInfo').textContent='Эскиз для обводки. «Упрощение» убирает мелкие линии, «Чувствительность» делает линии чётче. В набор уйдёт PNG с прозрачным фоном: положите его слоем и обводите.'}
+ else if(view==='persp')drawPersp(x,W,H);
+}
+function makeSketch(src,blur,sens,thick,col){
+ const W=src.width,H=src.height,k=W/1000,t=mkCanvas(W,H),tx=t.getContext('2d');tx.filter=blur>0?'blur('+(blur*k)+'px)':'none';tx.drawImage(src,0,0);tx.filter='none';
+ const d=tx.getImageData(0,0,W,H).data,g=new Float32Array(W*H);for(let i=0;i<W*H;i++)g[i]=lum(d[i*4],d[i*4+1],d[i*4+2]);
+ const [cr,cg,cb]=hexRgb(col),o=mkCanvas(W,H),ox=o.getContext('2d'),od=ox.createImageData(W,H),a=od.data,t0=sens*.6,t1=t0+sens*.8;
+ for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const i=y*W+x,gx=-g[i-W-1]-2*g[i-1]-g[i+W-1]+g[i-W+1]+2*g[i+1]+g[i+W+1],gy=-g[i-W-1]-2*g[i-W]-g[i-W+1]+g[i+W-1]+2*g[i+W]+g[i+W+1],m=Math.hypot(gx,gy),al=clamp((m-t0)/(t1-t0),0,1)*255,p=i*4;a[p]=cr;a[p+1]=cg;a[p+2]=cb;a[p+3]=al}
+ ox.putImageData(od,0,0);
+ const r=thick*k;if(r<.6)return o;const f=mkCanvas(W,H),fx=f.getContext('2d');for(let q=0;q<12;q++){const an=q/12*Math.PI*2;fx.drawImage(o,Math.cos(an)*r,Math.sin(an)*r)}fx.drawImage(o,0,0);return f;
+}
+let skN=1;
+async function addSketch(download){
+ if(!refImg)return toast('Загрузите референс');
+ toast('Готовлю эскиз…',3000);await new Promise(r=>setTimeout(r,30));
+ const src=fitDraw(refImg,2000),sk=makeSketch(src,gs.skBlur,gs.skSens,gs.skThick,gs.skCol),L=Math.max(sk.width,sk.height),T=Math.min(3600,L),out=mkCanvas(sk.width*T/L,sk.height*T/L),ox=out.getContext('2d');ox.imageSmoothingQuality='high';ox.drawImage(sk,0,0,out.width,out.height);
+ const b=await setDpi(await toBlob(out),300);if(download===true)saveBlob(b,'sketch.png');else basketAdd('sketch-'+String(skN++).padStart(2,'0')+'.png',b);
+}
+function perspPts(W,H){const p=gs.persp;return{hy:p.hy*H,v1:[p.v1*W,p.hy*H],v2:[p.v2*W,p.hy*H],v3:[p.v3x*W,p.v3y*H]}}
+function drawPersp(x,W,H){
+ x.fillStyle='rgba(255,255,255,.35)';x.fillRect(0,0,W,H);
+ const P=perspPts(W,H),t=gs.persp.type,R=W/90;
+ x.lineWidth=Math.max(1,W/600);
+ const rays=(v,col,n)=>{x.strokeStyle=col;x.beginPath();for(let i=0;i<n;i++){const a=-Math.PI/2+(i+.5)/n*Math.PI*2;const L=W*3;x.moveTo(v[0],v[1]);x.lineTo(v[0]+Math.cos(a)*L,v[1]+Math.sin(a)*L)}x.stroke()};
+ rays(P.v1,'rgba(220,40,100,.55)',t===1?24:16);if(t>=2)rays(P.v2,'rgba(30,110,220,.55)',16);if(t>=3)rays(P.v3,'rgba(30,150,80,.55)',14);
+ x.strokeStyle='#000';x.lineWidth=Math.max(2,W/400);x.setLineDash([W/60,W/90]);x.beginPath();x.moveTo(0,P.hy);x.lineTo(W,P.hy);x.stroke();x.setLineDash([]);
+ const dot=(v,c)=>{x.fillStyle=c;x.strokeStyle='#fff';x.lineWidth=3;x.beginPath();x.arc(v[0],v[1],R,0,7);x.fill();x.stroke()};
+ dot(P.v1,'#dc2864');if(t>=2)dot(P.v2,'#1e6edc');if(t>=3)dot(P.v3,'#1e9650');
+ x.fillStyle='#000';x.font='bold '+Math.round(W/45)+'px system-ui';x.fillText('горизонт (уровень глаз)',8,P.hy-8);
+ $('refInfo').textContent='Совместите горизонт с линией глаз на референсе, а точки с местом, куда сходятся рёбра домов, дорог, столов. Затем рисуйте объёмы вдоль лучей.';
+}
+(()=>{const c=$('refCanvas');let drag=null;
+ const pos=e=>{const r=c.getBoundingClientRect();return[(e.clientX-r.left)*c.width/r.width,(e.clientY-r.top)*c.height/r.height]};
+ c.addEventListener('pointerdown',e=>{if(view!=='persp'||!refCanvasSrc)return;const[px,py]=pos(e),P=perspPts(c.width,c.height),t=gs.persp.type,R=c.width/22;
+  const cand=[['v1',P.v1],t>=2&&['v2',P.v2],t>=3&&['v3',P.v3]].filter(Boolean);
+  let best=null,bd=R;for(const[n,v]of cand){const dd=Math.hypot(px-v[0],py-v[1]);if(dd<bd){bd=dd;best=n}}
+  if(!best&&Math.abs(py-P.hy)<R)best='hy';drag=best;if(drag)c.setPointerCapture(e.pointerId)});
+ c.addEventListener('pointermove',e=>{if(!drag)return;const[px,py]=pos(e),W=c.width,H=c.height,p=gs.persp;
+  if(drag==='hy')p.hy=clamp(py/H,.02,.98);else if(drag==='v1')p.v1=clamp(px/W,-1,2);else if(drag==='v2')p.v2=clamp(px/W,-1,2);else{p.v3x=clamp(px/W,-1,2);p.v3y=clamp(py/H,-2,3)}
+  renderRef()});
+ c.addEventListener('pointerup',()=>drag=null);c.addEventListener('pointercancel',()=>drag=null);
+})();
+/* ===== steps ===== */
+const STEPS={
+char:[
+ {t:'Настройка холста',d:'Создайте холст 3600×3600 px, 300 dpi, прозрачный фон. Положите референс на отдельный слой сверху и снизьте его непрозрачность до 30-40%.',n:'Так вы сразу рисуете в размере, пригодном для продажи, и не придётся увеличивать картинку потом.'},
+ {t:'Эскиз из простых форм',d:'Новым слоем одной тонкой кистью обозначьте голову кругом, тело овалом или грушей, лапы и руки цилиндрами. Не рисуйте детали.',n:'У детских персонажей голова обычно крупная, примерно треть высоты фигуры. Это даёт «милый» вид.'},
+ {t:'Уточнение силуэта',d:'Снизьте непрозрачность эскиза и обведите уточнённый контур: уши, хвост, позу. Проверьте, читается ли персонаж, если залить его чёрным.',n:'Хороший силуэт узнаётся даже без лица и цвета.'},
+ {t:'Лицо и мелкие формы',d:'Глаза расставьте широко и низко на голове, нос и рот маленькие. Добавьте щёчки.',n:'Чем ниже и шире глаза, тем детскее выглядит персонаж.'},
+ {t:'Чистовая линия',d:'Новый слой, кисть с нажимом или ровная линия. Обводите уверенно, длинными штрихами. Линию можно сделать цветной вместо чёрной, это выглядит мягче.',n:'Если линия дрожит, включите стабилизацию кисти в Krita (панель инструментов кисти, «Сглаживание»).'},
+ {t:'Плоская заливка',d:'Под слоем линий создайте слой на каждую крупную область (кожа/шерсть, одежда, фон). Заливайте инструментом «Заливка» с включённым ростом области 1-2 px. Основные цвета: {pal}.',n:'Отдельные слои цветов позволят потом менять окраску за секунды.'},
+ {t:'Тени',d:'Над заливкой создайте слой с режимом «Умножение». Мягкой кистью добавьте тень с одной стороны от источника света, цвет возьмите из тёмных тонов: {dark}.',n:'Свет сверху-слева, значит, тень снизу-справа. Держите одну сторону для всего набора.'},
+ {t:'Блики и румянец',d:'Слой с режимом «Экран» или «Добавление»: блики в глазах, на носу, на щеках. Светлые тона: {light}.',n:'Блик в глазу придаёт взгляду жизнь. Достаточно одной белой точки.'},
+ {t:'Проверка и экспорт',d:'Скройте референс, проверьте на белом, чёрном и цветном фоне. Экспорт: PNG, прозрачный фон, 300 dpi. Затем перенесите файл во вкладку «Подготовка».',n:'Если по краям светлая кайма, это остатки фона: уберите её во вкладке «Подготовка».'}],
+land:[
+ {t:'Настройка холста',d:'Холст 3600×2400 px или квадрат 3600×3600, 300 dpi. Референс на слой сверху, непрозрачность 30-40%.',n:'Для бумаги скрапбукинга нужен квадрат, для открыток подойдёт прямоугольник.'},
+ {t:'Горизонт и глубина',d:'Проведите линию горизонта и разделите картинку на передний, средний и дальний планы. Во вкладке «Перспектива» совместите горизонт с референсом.',n:'Горизонт лучше не ставить ровно посередине: выше или ниже, это сразу интереснее.'},
+ {t:'Крупные пятна',d:'На отдельных слоях залейте плоскими пятнами небо, землю, дальние холмы, воду. Используйте вид «Пятна» как подсказку. Цвета: {pal}.',n:'Сначала крупное, потом мелкое. Деталей пока нет.'},
+ {t:'Эскиз объектов',d:'Деревья, дома, камни рисуйте простыми формами: треугольники, овалы, прямоугольники. Дальние объекты меньше, бледнее и ближе к цвету неба.',n:'Это называется воздушной перспективой: чем дальше, тем меньше контраста.'},
+ {t:'Цвет по слоям',d:'От дальнего плана к ближнему. Дальний план светлее и холоднее, ближний темнее и теплее.',n:'Холодные оттенки отодвигают предмет, тёплые приближают.'},
+ {t:'Свет и тени',d:'Слой «Умножение»: тени от деревьев и домов в одну сторону. Тёмные тона: {dark}. Слой «Экран»: свет солнца на краях объектов.',n:'Одно направление света на всю картинку.'},
+ {t:'Детали',d:'Трава, листья, окна, облака. Крупные детали на переднем плане, на дальних почти не нужны.',n:'Не прорисовывайте всё одинаково. Лишние детали делают картинку шумной.'},
+ {t:'Финальная цветокоррекция',d:'Корректирующим слоем подтяните общий тон к референсу и добавьте мягкий светлый градиент у горизонта. Светлые тона: {light}.',n:'Достаточно слегка поднять яркость и тёплость.'},
+ {t:'Экспорт',d:'PNG или JPG, 300 dpi. Для бумаги 12×12 дюймов нужно 3600×3600 px.',n:'Проверьте размер во вкладке «Подготовка», там виден размер печати.'}],
+clip:[
+ {t:'Настройка холста',d:'Холст 3000×3000 px, 300 dpi, прозрачный фон. Референс слоем сверху с прозрачностью 30-40%.',n:'Рисуйте с запасом по краям: потом можно обрезать лишнее, а добавить уже нельзя.'},
+ {t:'Эскиз формы',d:'Одним овалом, кругом или прямоугольником обозначьте основную форму предмета, затем добавьте части.',n:'Любой предмет состоит из простых форм. Найдите их на референсе.'},
+ {t:'Чистая линия',d:'Новый слой, ровная линия одной толщины. Замкните все контуры, чтобы заливка не вытекала.',n:'Проверка: залейте контур красным. Если красное убежало, значит где-то зазор.'},
+ {t:'Заливка основы',d:'Каждый цвет на отдельном слое под линиями. Цвета: {pal}.',n:'Для набора берите те же 5-7 цветов во всех клипартах: так они выглядят серией.'},
+ {t:'Тень и объём',d:'Слой «Умножение»: мягкая тень с одной стороны. Тёмные тона: {dark}.',n:'Для плоского стиля достаточно одного оттенка тени и одной формы.'},
+ {t:'Блики и мелочи',d:'Блики «Экраном», узоры, точки, мелкие детали. Светлые тона: {light}.',n:'Не больше 2-3 мелких деталей, иначе клипарт плохо читается в уменьшении.'},
+ {t:'Проверка на фонах',d:'Положите белый, чёрный и цветной фон под слои. Убедитесь, что нет светлой каймы и дыр.',n:'Покупатели кладут клипарты на любые фоны, поэтому края должны быть чистыми.'},
+ {t:'Экспорт и подготовка',d:'PNG с прозрачным фоном, 300 dpi. Во вкладке «Подготовка» обрежьте поля и при желании добавьте белую обводку.',n:'Имена файлов лучше делать понятными: bear-01.png, bear-02.png.'}]
+};
+let stSteps=null,stIdx=0,stDone=new Set();
+const PROGN={krita:'Krita',penup:'PenUp',sketchbook:'Sketchbook',hipaint:'Hi Paint',infinite:'Infinite Painter',other:'вашей программе'};
+function progTip(){const p=$('stProg').value;if(p==='krita')return 'Krita: режимы слоя «Умножение» (Multiply) и «Экран» (Screen) выбираются в панели слоёв. Сетка: Вид → Показать → Сетка.';
+ return 'В '+PROGN[p]+' названия могут отличаться: ищите в настройках слоя режимы Multiply («Умножение») и Screen («Экран»). Если слоёв мало, рисуйте тени и блики на одном слое, а цветные пятна объедините.'}
+try{const sp=localStorage.getItem('artstudio.prog');if(sp)$('stProg').value=sp}catch{}
+function palFill(s){
+ const by=f=>palette.filter(f).slice(0,4).map(p=>p.hex.toUpperCase()).join(', ')||'подберите из палитры';
+ return s.replace('{pal}',palette.slice(0,5).map(p=>p.hex.toUpperCase()).join(', ')||'загрузите референс')
+  .replace('{dark}',by(p=>p.l<100)).replace('{light}',by(p=>p.l>170));
+}
+function buildSteps(){stSteps=null;stIdx=0;stDone=new Set();renderStep()}
+function curSteps(){return stSteps||STEPS[$('stType').value]}
+function renderStep(){
+ const S=curSteps(),l=$('stList');l.innerHTML='';
+ S.forEach((s,i)=>{const b=document.createElement('button');b.textContent=(i+1);b.title=s.t;if(i===stIdx)b.classList.add('on');if(stDone.has(i))b.classList.add('done');b.onclick=()=>{stIdx=i;renderStep();autoSay()};l.appendChild(b)});
+ const s=S[stIdx];if(!s)return;
+ const extra=$('stLevel').value==='n'&&s.n?'<br><span class="muted">'+esc(s.n)+'</span>':'';
+ $('stCur').innerHTML='<b>Шаг '+(stIdx+1)+' из '+S.length+'. '+esc(s.t)+'</b>'+esc(palFill(s.d))+extra+'<br><span class="muted">'+esc(progTip())+'</span>';
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function stepText(){const s=curSteps()[stIdx];return s?s.t+'. '+palFill(s.d)+($('stLevel').value==='n'&&s.n?' '+s.n:''):''}
+function say(){if(!('speechSynthesis'in window))return toast('Озвучка не поддерживается');speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(stepText());u.lang='ru-RU';speechSynthesis.speak(u)}
+function autoSay(){if($('stAuto').checked)say()}
+$('stNext').onclick=()=>{stDone.add(stIdx);const n=curSteps().length;stIdx=Math.min(n-1,stIdx+1);renderStep();autoSay()};
+$('stPrev').onclick=()=>{stIdx=Math.max(0,stIdx-1);renderStep();autoSay()};
+$('stSay').onclick=say;
+$('stType').onchange=()=>{stSteps=null;buildSteps()};
+$('stLevel').onchange=renderStep;
+$('stProg').onchange=()=>{try{localStorage.setItem('artstudio.prog',$('stProg').value)}catch{}renderStep()};
+renderStep();
+
+/* ===== vault (encrypted keys) ===== */
+const vault={key:null,salt:null,profiles:[],timer:null};
+const VK='artstudio.vault.v1';
+const b64=u=>btoa(String.fromCharCode(...u)),unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function deriveKey(pw,salt){const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+function readStore(){try{return JSON.parse(localStorage.getItem(VK)||'null')}catch{return null}}
+async function saveVault(){
+ const iv=crypto.getRandomValues(new Uint8Array(12));
+ const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},vault.key,new TextEncoder().encode(JSON.stringify(vault.profiles))));
+ try{localStorage.setItem(VK,JSON.stringify({s:b64(vault.salt),i:b64(iv),d:b64(ct)}))}catch{toast('Браузер не даёт сохранить данные')}
+}
+function lockVault(){vault.key=null;vault.profiles=[];vault.salt=null;clearTimeout(vault.timer);drawVault()}
+function touchVault(){if(!vault.key)return;clearTimeout(vault.timer);vault.timer=setTimeout(()=>{lockVault();toast('Хранилище закрыто из-за бездействия')},15*60*1000)}
+document.addEventListener('pointerdown',touchVault);
+$('vaultOpen').onclick=async()=>{
+ if(!window.crypto?.subtle)return toast('В этом режиме браузера шифрование недоступно');
+ const pw=$('vaultPw').value;if(pw.length<6)return toast('Пароль не короче 6 символов');
+ const st=readStore();
+ try{
+  if(st){const salt=unb64(st.s),key=await deriveKey(pw,salt);const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(st.i)},key,unb64(st.d));vault.profiles=JSON.parse(new TextDecoder().decode(pt));vault.key=key;vault.salt=salt}
+  else{vault.salt=crypto.getRandomValues(new Uint8Array(16));vault.key=await deriveKey(pw,vault.salt);vault.profiles=[];await saveVault();toast('Хранилище создано')}
+ }catch{toast('Неверный пароль');return}
+ $('vaultPw').value='';touchVault();drawVault();
+};
+$('vaultLock').onclick=lockVault;
+$('vaultWipe').onclick=function(){
+ if(!this.dataset.sure){this.dataset.sure='1';this.textContent='Нажмите ещё раз';setTimeout(()=>{delete this.dataset.sure;this.textContent='Стереть всё'},4000);return}
+ try{localStorage.removeItem(VK)}catch{}lockVault();toast('Хранилище стёрто');this.click&&0;delete this.dataset.sure;this.textContent='Стереть всё';
+};
+$('pAdd').onclick=async()=>{
+ if(!vault.key)return toast('Сначала откройте хранилище');
+ const p={id:Date.now().toString(36),name:$('pName').value.trim()||'Профиль',kind:$('pKind').value,model:$('pModel').value.trim(),base:$('pBase').value.trim().replace(/\/+$/,''),key:$('pKey').value.trim()};
+ if(!p.key||!p.model)return toast('Нужны модель и ключ');
+ vault.profiles.push(p);await saveVault();$('pKey').value='';$('pName').value='';drawVault();toast('Профиль сохранён');
+};
+function drawVault(){
+ const st=readStore();
+ $('vaultState').textContent=vault.key?'Открыто. Профилей: '+vault.profiles.length:(st?'Закрыто. Введите пароль.':'Ещё не создано. Введите новый пароль и нажмите «Открыть», хранилище создастся.');
+ const L=$('profList');L.innerHTML='';
+ if(!vault.key)L.textContent='Хранилище закрыто.';
+ else if(!vault.profiles.length)L.textContent='Профилей пока нет.';
+ vault.profiles.forEach(p=>{const r=document.createElement('div');r.className='row';const s=document.createElement('span');s.textContent=p.name+' · '+(p.kind==='anthropic'?'Claude':'OpenAI-совм.')+' · '+p.model+' · ключ …'+p.key.slice(-4);
+  const d=document.createElement('button');d.textContent='Удалить';d.onclick=async()=>{vault.profiles=vault.profiles.filter(x=>x.id!==p.id);await saveVault();drawVault()};r.append(s,d);L.appendChild(r)});
+ const sel=$('aiProf');sel.innerHTML='';
+ if(!vault.key||!vault.profiles.length){sel.add(new Option(vault.key?'Нет профилей':'Ключи закрыты',''))}
+ else vault.profiles.forEach(p=>sel.add(new Option(p.name,p.id)));
+}
+drawVault();
+
+/* ===== AI ===== */
+function refJpegB64(){const c=fitDraw(refCanvasSrc,1280);return c.toDataURL('image/jpeg',.85)}
+async function askAI(prof,text,withImg=true){
+ const url=withImg&&refCanvasSrc?refJpegB64():null;
+ if(prof.kind==='anthropic'){
+  const content=[];if(url)content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:url.split(',')[1]}});content.push({type:'text',text});
+  const r=await fetch((prof.base||'https://api.anthropic.com')+'/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':prof.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:prof.model,max_tokens:3000,messages:[{role:'user',content}]})});
+  const j=await r.json();if(!r.ok)throw new Error(j.error?.message||('Ошибка '+r.status));
+  return (j.content||[]).map(c=>c.text||'').join('');
+ }
+ const content=[{type:'text',text}];if(url)content.push({type:'image_url',image_url:{url}});
+ const r=await fetch((prof.base||'https://api.openai.com/v1')+'/chat/completions',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+prof.key},body:JSON.stringify({model:prof.model,max_tokens:3000,messages:[{role:'user',content}]})});
+ const j=await r.json();if(!r.ok)throw new Error(j.error?.message||('Ошибка '+r.status));
+ return j.choices?.[0]?.message?.content||'';
+}
+function profSel(){if(!vault.key)throw new Error('Откройте хранилище во вкладке «Ключи ИИ»');const p=vault.profiles.find(x=>x.id===$('aiProf').value);if(!p)throw new Error('Выберите профиль модели');return p}
+$('aiRun').onclick=async()=>{
+ const b=$('aiRun');
+ try{
+  if(!refCanvasSrc)throw new Error('Сначала загрузите референс');const p=profSel();
+  b.disabled=true;$('aiOut').textContent='ИИ разбирает картинку…';
+  const kind={char:'персонаж',land:'пейзаж',clip:'клипарт/предмет'}[$('stType').value],lv=$('stLevel').value==='n'?'новичок':'средний уровень';
+  const prompt='Ты наставник по цифровой иллюстрации. Пользователь рисует на планшете в программе '+PROGN[$('stProg').value]+' для продажи цифровых товаров (детские иллюстрации, клипарты, паттерны). По прикреплённому референсу ('+kind+') составь пошаговый план, как нарисовать это с нуля: от настройки холста и эскиза до экспорта PNG 300 dpi. Уровень: '+lv+'. Палитра референса: '+palette.map(x=>x.hex.toUpperCase()+' '+x.pct.toFixed(0)+'%').join(', ')+'. Опиши именно этот рисунок: формы, пропорции, куда падает свет, какие слои завести, какие режимы слоёв и цвета брать. Называй инструменты и режимы так, как они называются в этой программе; если не уверен, дай общее название на английском и принцип действия. 8-12 шагов, каждый 2-4 предложения, простым языком. Ответь ТОЛЬКО JSON-массивом вида [{"t":"короткий заголовок","d":"что делать","n":"совет для новичка"}] без пояснений и без markdown.';
+  const out=await askAI(p,prompt);
+  const m=out.match(/\[[\s\S]*\]/);if(!m)throw new Error('Модель ответила не в нужном формате. Нажмите ещё раз.');
+  const arr=JSON.parse(m[0]).filter(s=>s&&s.t&&s.d);if(!arr.length)throw new Error('Пустой план');
+  stSteps=arr.map(s=>({t:String(s.t),d:String(s.d),n:s.n?String(s.n):''}));stIdx=0;stDone=new Set();renderStep();$('aiOut').textContent='Готово: '+arr.length+' шагов под ваш референс.';
+ }catch(e){$('aiOut').textContent='Не получилось: '+e.message}
+ finally{b.disabled=false}
+};
+$('aiSimple').onclick=async()=>{
+ const b=$('aiSimple');
+ try{
+  const p=profSel();b.disabled=true;$('aiOut').textContent='Думаю…';
+  const out=await askAI(p,'Объясни ещё проще и подробнее, как выполнить этот шаг рисования на планшете в программе '+PROGN[$('stProg').value]+', по пунктам, на русском, без вступлений: '+stepText(),!!refCanvasSrc);
+  $('aiOut').textContent=out.trim();
+ }catch(e){$('aiOut').textContent='Не получилось: '+e.message}
+ finally{b.disabled=false}
+};
+/* ===== prep: background, crop, outline, dpi ===== */
+let prepOrig=null,prepUndo=[],prepN=1;
+function prepSet(c){const t=$('prepCanvas');t.width=c.width;t.height=c.height;t.getContext('2d').drawImage(c,0,0);updatePrint()}
+function prepSnap(){const t=$('prepCanvas');const c=mkCanvas(t.width,t.height);c.getContext('2d').drawImage(t,0,0);prepUndo.push(c);if(prepUndo.length>4)prepUndo.shift()}
+function prepOn(){return $('prepCanvas').width>1&&prepOrig}
+$('prepFile').onchange=async e=>{
+ const f=e.target.files[0];if(!f)return;
+ try{const img=await fileImg(f);const c=fitDraw(img,3000);prepOrig=c;prepUndo=[];prepSet(c);$('prepInfo').textContent='Загружено '+img.width+'×'+img.height+' px'+(c.width<img.width?' (уменьшено до '+c.width+'×'+c.height+' для работы)':'')+'.';autoBg()}catch(err){toast(err.message)}
+};
+function autoBg(){const t=$('prepCanvas'),x=t.getContext('2d'),W=t.width,H=t.height;let r=0,g=0,b=0;for(const[px,py]of[[0,0],[W-1,0],[0,H-1],[W-1,H-1]]){const d=x.getImageData(px,py,1,1).data;r+=d[0];g+=d[1];b+=d[2]}$('bgCol').value=hex(r/4,g/4,b/4)}
+$('bgAuto').onclick=()=>{if(prepOn())autoBg()};
+$('rmBg').onclick=()=>{
+ if(!prepOn())return toast('Сначала загрузите рисунок');
+ prepSnap();
+ const t=$('prepCanvas'),x=t.getContext('2d'),W=t.width,H=t.height,id=x.getImageData(0,0,W,H),d=id.data,[br,bg,bb]=hexRgb($('bgCol').value),tol=+$('tol').value,fe=Math.max(1,+$('feather').value),lim=tol+fe;
+ const dist=p=>Math.hypot(d[p*4]-br,d[p*4+1]-bg,d[p*4+2]-bb);
+ const apply=(p,dd)=>{const a=dd<=tol?0:Math.round((dd-tol)/fe*255);if(a<d[p*4+3]){if(a>0&&a<255){const k=a/255,o=p*4;d[o]=clamp((d[o]-br*(1-k))/k,0,255);d[o+1]=clamp((d[o+1]-bg*(1-k))/k,0,255);d[o+2]=clamp((d[o+2]-bb*(1-k))/k,0,255)}d[p*4+3]=a}};
+ if($('floodAll').checked){for(let p=0;p<W*H;p++){const dd=dist(p);if(dd<=lim)apply(p,dd)}}
+ else{
+  const seen=new Uint8Array(W*H),st=[];
+  const push=p=>{if(!seen[p]&&dist(p)<=lim){seen[p]=1;st.push(p)}};
+  for(let i=0;i<W;i++){push(i);push((H-1)*W+i)}for(let j=0;j<H;j++){push(j*W);push(j*W+W-1)}
+  while(st.length){const p=st.pop();apply(p,dist(p));const xx=p%W;if(xx>0)push(p-1);if(xx<W-1)push(p+1);if(p>=W)push(p-W);if(p<W*(H-1))push(p+W)}
+ }
+ x.putImageData(id,0,0);updatePrint();toast('Фон убран. Остатки можно стереть ластиком.');
+};
+$('undo').onclick=()=>{const c=prepUndo.pop();if(c)prepSet(c);else toast('Нечего отменять')};
+$('resetPrep').onclick=()=>{if(prepOrig){prepSnap();prepSet(prepOrig)}};
+$('prepMode').onchange=()=>{$('prepCanvas').style.touchAction=$('prepMode').value==='none'?'auto':'none'};
+(()=>{const c=$('prepCanvas');let down=false,last=null;
+ const pos=e=>{const r=c.getBoundingClientRect();return[(e.clientX-r.left)*c.width/r.width,(e.clientY-r.top)*c.height/r.height]};
+ const erase=(a,b)=>{const x=c.getContext('2d'),r=+$('eraseR').value*c.width/Math.max(1,c.getBoundingClientRect().width)*0.6;x.save();x.globalCompositeOperation='destination-out';x.lineCap='round';x.lineWidth=r*2;x.beginPath();x.moveTo(a[0],a[1]);x.lineTo(b[0],b[1]);x.stroke();x.restore()};
+ c.addEventListener('pointerdown',e=>{if(!prepOn())return;const m=$('prepMode').value,p=pos(e);
+  if(m==='pick'){const d=c.getContext('2d').getImageData(clamp(Math.round(p[0]),0,c.width-1),clamp(Math.round(p[1]),0,c.height-1),1,1).data;$('bgCol').value=hex(d[0],d[1],d[2]);toast('Цвет фона выбран');}
+  else if(m==='erase'){prepSnap();down=true;last=p;c.setPointerCapture(e.pointerId);erase(p,p)}});
+ c.addEventListener('pointermove',e=>{if(!down)return;const p=pos(e);erase(last,p);last=p});
+ const up=()=>{if(down){down=false;updatePrint()}};c.addEventListener('pointerup',up);c.addEventListener('pointercancel',up);
+})();
+function trimCanvas(src,pad=8){
+ const W=src.width,H=src.height,d=src.getContext('2d').getImageData(0,0,W,H).data;let x0=W,y0=H,x1=-1,y1=-1;
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(d[(y*W+x)*4+3]>8){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
+ if(x1<0)return src;x0=Math.max(0,x0-pad);y0=Math.max(0,y0-pad);x1=Math.min(W-1,x1+pad);y1=Math.min(H-1,y1+pad);
+ const c=mkCanvas(x1-x0+1,y1-y0+1);c.getContext('2d').drawImage(src,x0,y0,c.width,c.height,0,0,c.width,c.height);return c;
+}
+$('cropBtn').onclick=()=>{if(!prepOn())return;prepSnap();prepSet(trimCanvas($('prepCanvas')))};
+$('olBtn').onclick=()=>{
+ if(!prepOn())return;prepSnap();const s=$('prepCanvas'),r=Math.round(+$('olW').value),W=s.width+r*2,H=s.height+r*2;
+ const sil=mkCanvas(s.width,s.height),sx=sil.getContext('2d');sx.drawImage(s,0,0);sx.globalCompositeOperation='source-in';sx.fillStyle=$('olCol').value;sx.fillRect(0,0,sil.width,sil.height);
+ const o=mkCanvas(W,H),ox=o.getContext('2d'),n=Math.max(32,Math.ceil(r*1.2));
+ for(let k=1;k<=3;k++){const rr=r*k/3;for(let i=0;i<n;i++){const a=i/n*Math.PI*2;ox.drawImage(sil,r+Math.cos(a)*rr,r+Math.sin(a)*rr)}}
+ ox.drawImage(s,r,r);prepSet(o);toast('Обводка добавлена');
+};
+function prepTarget(){const t=$('prepCanvas'),dpi=Math.max(72,+$('dpiP').value||300),inl=+$('inLong').value||0;let W=t.width,H=t.height;if(inl>0){const k=inl*dpi/Math.max(W,H);W=Math.round(W*k);H=Math.round(H*k)}return{W,H,dpi,k:W/t.width}}
+function updatePrint(){
+ const t=$('prepCanvas');if(t.width<2)return;const g=prepTarget(),inch=v=>(v/g.dpi).toFixed(1);
+ let s='Результат: '+g.W+'×'+g.H+' px = '+inch(g.W)+'×'+inch(g.H)+' дюйма ('+(g.W/g.dpi*2.54).toFixed(1)+'×'+(g.H/g.dpi*2.54).toFixed(1)+' см) при '+g.dpi+' dpi.';
+ if(g.k>1.5)s+=' Увеличение ×'+g.k.toFixed(1)+': мелкие детали не появятся, лучше рисовать на большем холсте.';
+ $('printInfo').textContent=s;
+}
+['inLong','dpiP'].forEach(i=>$(i).oninput=updatePrint);
+async function prepBlob(){const t=$('prepCanvas'),g=prepTarget();let c=t;if(g.W!==t.width){c=mkCanvas(g.W,g.H);const x=c.getContext('2d');x.imageSmoothingQuality='high';x.drawImage(t,0,0,g.W,g.H)}return setDpi(await toBlob(c),g.dpi)}
+$('addPrep').onclick=async()=>{if(!prepOn())return toast('Нет рисунка');basketAdd('clipart-'+String(prepN++).padStart(2,'0')+'.png',await prepBlob())};
+$('dlPrep').onclick=async()=>{if(!prepOn())return toast('Нет рисунка');saveBlob(await prepBlob(),'clipart.png')};
+
+/* ===== patterns ===== */
+const PALS={pastel:['Пастель детская',['#ffd6e0','#ffefb5','#c9ecd6','#cfe3ff','#e6d5ff']],flower:['Цветочная',['#f7c6d0','#fbe3a1','#a9d6b3','#f3a8a0','#fdf1e3']],xmas:['Новый год',['#0f4c3a','#c0392b','#f4f1e8','#d4a937','#1f3a5f']],hall:['Хэллоуин',['#ff7a1a','#2a1b3d','#7bc043','#f5e6ff','#111111']],easter:['Пасха',['#ffd3e1','#d8f3c4','#fff2a8','#cfe8ff','#e8d5f5']],autumn:['Осень',['#b5541c','#d9a441','#7a8b3a','#8a2f2f','#f1e1c6']]};
+const PRES={
+ kids:{pal:'pastel',layout:'rand',n:14,size:20,rot:20,hint:'Детский набор: нарисуйте 5-7 крупных героев (зверята, машинки, облака), 2-3 средних (сердечки, звёзды) и оставьте воздух между ними. Заполнители добавляются кодом.'},
+ flor:{pal:'flower',layout:'rand',n:22,size:16,rot:70,hint:'Цветочный набор: 3 цветка разной формы, 2-3 листа, 1-2 бутона и веточка. Размеры сильно разные, повороты свободные. Мелкие цветочки-заполнители добавятся сами.'},
+ seas:{pal:'xmas',layout:'drop',n:18,size:14,rot:30,hint:'Сезонный набор: 6-8 символов праздника (ёлка, подарок, шар, снежинка), держите 4-5 цветов палитры. Выберите нужную палитру справа: Новый год, Хэллоуин, Пасха, Осень.'}
+};
+const pat={els:[],pts:[],fill:[],seed:3};
+function patPalOptions(){const cur=$('patPal').value;$('patPal').innerHTML=Object.entries(PALS).map(([k,v])=>'<option value="'+k+'">'+v[0]+'</option>').join('');if(PALS[cur])$('patPal').value=cur}
+patPalOptions();
+function loadSeries(){let a={};try{a=JSON.parse(localStorage.getItem('artstudio.series')||'{}')}catch{}for(const k of Object.keys(PALS))if(k.startsWith('s:'))delete PALS[k];for(const[n,c]of Object.entries(a))if(c.length>=2)PALS['s:'+n]=['Серия: '+n,c.length<2?c.concat(c):c];patPalOptions()}
+loadSeries();
+function patCols(){return PALS[$('patPal').value][1]}
+function drawChips(){const el=$('patChips');el.innerHTML='';patCols().forEach(c=>{const b=document.createElement('button');b.className='sw';b.innerHTML='<i style="background:'+c+'"></i><span>'+c.toUpperCase()+'</span>';b.title='Сделать фоном';b.onclick=()=>{$('patBg').value=c;buildPat();drawPat()};el.appendChild(b)})}
+function applyPreset(){const p=PRES[$('patPreset').value];$('patPal').value=p.pal;$('patLayout').value=p.layout;$('patN').value=p.n;$('patSize').value=p.size;$('patRot').value=p.rot;$('patHint').textContent=p.hint;$('patBg').value=PALS[p.pal][1][1];drawChips()}
+$('patPreset').onchange=()=>{applyPreset();buildPat();drawPat()};
+$('patPal').onchange=()=>{drawChips();$('patBg').value=patCols()[1];buildPat();drawPat()};
+function thumbs(){const t=$('patThumbs');t.innerHTML='';pat.els.forEach(e=>{const i=new Image();i.src=e.toDataURL();t.appendChild(i)})}
+$('patFiles').onchange=async e=>{for(const f of e.target.files){try{pat.els.push(fitDraw(await fileImg(f),1400))}catch(err){toast(err.message)}}thumbs();buildPat();drawPat()};
+$('patUsePrep').onclick=()=>{if(!prepOn())return toast('В «Подготовке» нет рисунка');const c=trimCanvas($('prepCanvas'));pat.els.push(fitDraw(c,1400));thumbs();buildPat();drawPat()};
+$('patClear').onclick=()=>{pat.els=[];thumbs();buildPat();drawPat()};
+const tdist=(a,b)=>{let dx=Math.abs(a[0]-b[0]),dy=Math.abs(a[1]-b[1]);dx=Math.min(dx,1-dx);dy=Math.min(dy,1-dy);return Math.hypot(dx,dy)};
+function mitchell(existing,count,R,cand){const out=[];for(let k=0;k<count;k++){let best=null,bd=-1;for(let c=0;c<cand;c++){const p=[R(),R()];let m=9;for(const q of existing)m=Math.min(m,tdist(p,q));for(const q of out)m=Math.min(m,tdist(p,q));if(m>bd){bd=m;best=p}}out.push(best)}return out}
+function buildPat(){
+ const R=rng(pat.seed*9973+11),n=+$('patN').value,lay=$('patLayout').value,rot=+$('patRot').value,flip=$('patFlip').checked,E=pat.els.length||1;
+ let xy=[];
+ if(lay==='rand')xy=mitchell([],n,R,24);
+ else{const g=Math.max(2,Math.round(Math.sqrt(n)));for(let i=0;i<g;i++)for(let j=0;j<g;j++){let x=(i+.5)/g,y=(j+.5)/g;if(lay==='drop'&&i%2)y=(y+.5/g)%1;if(lay==='brick'&&j%2)x=(x+.5/g)%1;xy.push([x,y])}}
+ let seq=[];
+ pat.pts=xy.map((p,k)=>{if(k%E===0){seq=[...Array(E).keys()];for(let a=E-1;a>0;a--){const b=Math.floor(R()*(a+1));[seq[a],seq[b]]=[seq[b],seq[a]]}}
+  return{x:p[0],y:p[1],e:seq[k%E],sc:.85+R()*.3,rot:(R()*2-1)*rot*Math.PI/180,fl:flip&&R()<.5}});
+ pat.fill=[];
+ if($('patFill').checked){const cols=patCols(),f=mitchell(xy,Math.round(xy.length*2.2),R,14);
+  pat.fill=f.map(p=>({x:p[0],y:p[1],k:Math.floor(R()*4),c:cols[Math.floor(R()*cols.length)],s:.008+R()*.014,rot:R()*6.28}))}
+}
+function star(x,r){x.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.45:r;x[i?'lineTo':'moveTo'](Math.cos(a)*rr,Math.sin(a)*rr)}x.closePath();x.fill()}
+function fillShape(x,f,S){const r=f.s*S;x.fillStyle=f.c;x.strokeStyle=f.c;
+ if(f.k===0){x.beginPath();x.arc(0,0,r*.6,0,7);x.fill()}
+ else if(f.k===1)star(x,r*1.2);
+ else if(f.k===2){x.lineWidth=r*.3;x.beginPath();x.arc(0,0,r*.8,0,7);x.stroke()}
+ else{for(let i=0;i<5;i++){x.save();x.rotate(i*1.2566);x.beginPath();x.arc(r*.7,0,r*.5,0,7);x.fill();x.restore()}x.fillStyle='#fff8';x.beginPath();x.arc(0,0,r*.35,0,7);x.fill()}}
+function renderTile(S,bg){
+ const c=mkCanvas(S,S),x=c.getContext('2d');x.imageSmoothingQuality='high';x.fillStyle=bg||$('patBg').value;x.fillRect(0,0,S,S);
+ const wrap=(cx,cy,half,fn)=>{for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const px=cx+a*S,py=cy+b*S;if(px<-half||px>S+half||py<-half||py>S+half)continue;x.save();x.translate(px,py);fn();x.restore()}};
+ for(const f of pat.fill)wrap(f.x*S,f.y*S,f.s*S*3,()=>{x.rotate(f.rot);fillShape(x,f,S)});
+ const sz=S*(+$('patSize').value)/100;
+ for(const p of pat.pts){const e=pat.els[p.e];if(!e)continue;const k=sz*p.sc/Math.max(e.width,e.height),w=e.width*k,h=e.height*k;
+  wrap(p.x*S,p.y*S,Math.hypot(w,h)/2,()=>{x.rotate(p.rot);if(p.fl)x.scale(-1,1);x.drawImage(e,-w/2,-h/2,w,h)})}
+ return c;
+}
+function drawPat(){
+ const P=360,t=renderTile(P),c=$('patCanvas');c.width=c.height=P*3;const x=c.getContext('2d');
+ for(let i=0;i<3;i++)for(let j=0;j<3;j++)x.drawImage(t,i*P,j*P);
+ if($('patSeam').checked){x.strokeStyle='#e0245e';x.lineWidth=2;x.setLineDash([8,6]);x.beginPath();for(let i=1;i<3;i++){x.moveTo(i*P,0);x.lineTo(i*P,P*3);x.moveTo(0,i*P);x.lineTo(P*3,i*P)}x.stroke()}
+ const S=Math.min(6000,Math.round(+$('patIn').value*(+$('patDpi').value||300)));
+ $('patInfo').textContent='Плитка '+S+'×'+S+' px ('+$('patIn').value+'×'+$('patIn').value+' in, '+$('patDpi').value+' dpi). Края продолжают друг друга, шва нет. '+(pat.els.length?'Элементов: '+pat.els.length+'.':'Загрузите свои элементы, пока видны только заполнители.');
+}
+['patLayout','patN','patRot','patFill','patFlip'].forEach(i=>$(i).onchange=()=>{buildPat();drawPat()});
+['patSize','patBg','patSeam','patIn','patDpi'].forEach(i=>$(i).oninput=drawPat);
+$('patGo').onclick=()=>{buildPat();drawPat()};
+$('patSeed').onclick=()=>{pat.seed++;buildPat();drawPat()};
+let patN=1;
+async function patExport(type){const S=Math.min(6000,Math.round(+$('patIn').value*(+$('patDpi').value||300))),dpi=+$('patDpi').value||300;toast('Собираю плитку '+S+'×'+S+'…',4000);await new Promise(r=>setTimeout(r,30));
+ const b=await setDpi(await toBlob(renderTile(S),type,.93),dpi);basketAdd('paper-'+String(patN++).padStart(2,'0')+(type==='image/png'?'.png':'.jpg'),b)}
+$('patAddPng').onclick=()=>patExport('image/png');$('patAddJpg').onclick=()=>patExport('image/jpeg');
+
+/* ===== mockups ===== */
+const rr=(x,a,b,w,h,r)=>{x.beginPath();x.roundRect(a,b,w,h,r)};
+function contain(x,img,a,b,w,h){const k=Math.min(w/img.width,h/img.height),iw=img.width*k,ih=img.height*k;x.drawImage(img,a+(w-iw)/2,b+(h-ih)/2,iw,ih)}
+function fitText(x,t,font,maxW,size){let s=size;do{x.font=font.replace('#',s+'px');s-=2}while(x.measureText(t).width>maxW&&s>14)}
+function clips(){const a=[...pat.els];if(prepOn())a.push(trimCanvas($('prepCanvas')));return a}
+function mkBandText(x,W,y,title,sub,col){x.textAlign='center';x.fillStyle=col;fitText(x,title,'700 #px system-ui,sans-serif',W*.84,W*.085);x.fillText(title,W/2,y);
+ x.globalAlpha=.8;fitText(x,sub,'500 #px system-ui,sans-serif',W*.84,W*.036);x.fillText(sub,W/2,y+W*.06);x.globalAlpha=1}
+function drawMock(){
+ const[W,H]=$('mkSize').value.split('x').map(Number),c=$('mockCanvas');c.width=W;c.height=H;const x=c.getContext('2d');
+ const bg=$('mkBg').value,acc=$('mkAcc').value,title=$('mkTitle').value,sub=$('mkSub').value,kind=$('mkKind').value,cols=patCols();
+ if(!pat.pts.length&&!pat.fill.length)buildPat();
+ x.fillStyle=bg;x.fillRect(0,0,W,H);const g=x.createRadialGradient(W/2,H*.4,10,W/2,H*.4,Math.max(W,H)*.7);g.addColorStop(0,'rgba(255,255,255,.55)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,W,H);
+ if(kind==='stack'){
+  const s=Math.min(W*.62,H*.5),cx=W/2,cy=H*.42,tiles=[0,1,2,3].map(k=>renderTile(900,k===3?$('patBg').value:cols[(k*2+1)%cols.length]));
+  [[-11,-.22,-.05],[-4,.2,-.12],[5,-.14,.1],[11,.05,.0]].forEach(([deg,dx,dy],k)=>{
+   x.save();x.translate(cx+dx*s*.55,cy+dy*s*.35);x.rotate(deg*Math.PI/180);x.shadowColor='rgba(0,0,0,.28)';x.shadowBlur=s*.05;x.shadowOffsetY=s*.02;
+   x.fillStyle='#fff';x.fillRect(-s/2-s*.02,-s/2-s*.02,s*1.04,s*1.04);x.shadowColor='transparent';x.drawImage(tiles[k],-s/2,-s/2,s,s);x.restore()});
+  const by=H*.42+s*.78;x.fillStyle=acc;rr(x,W*.06,by-W*.09,W*.88,W*.2,W*.02);x.fill();mkBandText(x,W,by+W*.01,title,sub,'#fff');
+ }else if(kind==='grid'){
+  const cl=clips(),n=W>=H?4:3,rows=Math.min(W>=H?3:4,Math.ceil(Math.max(cl.length,6)/n)),top=W*.22,gap=W*.03,cw=(W*.88-gap*(n-1))/n,ch=Math.min(cw,(H-top-W*.06-gap*(rows-1))/rows);
+  x.fillStyle=acc;x.fillRect(0,0,W,top*.85);mkBandText(x,W,top*.45,title,sub,'#fff');
+  for(let r=0;r<rows;r++)for(let k=0;k<n;k++){const a=W*.06+k*(cw+gap),b=top+r*(ch+gap);x.save();x.shadowColor='rgba(0,0,0,.18)';x.shadowBlur=W*.015;x.shadowOffsetY=W*.005;x.fillStyle='#fff';rr(x,a,b,cw,ch,W*.015);x.fill();x.restore();
+   const im=cl.length?cl[(r*n+k)%cl.length]:null;if(im)contain(x,im,a+cw*.08,b+ch*.08,cw*.84,ch*.84)}
+  if(!cl.length){x.fillStyle='#000a';x.textAlign='center';x.font='600 '+W*.03+'px system-ui';x.fillText('Добавьте клипарты во вкладках «Подготовка» или «Паттерны»',W/2,H-W*.03)}
+ }else{
+  const t=renderTile(900,$('patBg').value),k=Math.max(W,H)/2;for(let i=0;i<Math.ceil(W/k);i++)for(let j=0;j<Math.ceil(H/k);j++)x.drawImage(t,i*k,j*k,k,k);
+  const cw=W*.78,chh=Math.min(H*.5,W*.62),a=(W-cw)/2,b=(H-chh)/2+H*.04;x.save();x.shadowColor='rgba(0,0,0,.3)';x.shadowBlur=W*.04;x.shadowOffsetY=W*.012;x.fillStyle='#fff';rr(x,a,b,cw,chh,W*.04);x.fill();x.restore();
+  x.fillStyle='#16302c';x.textAlign='center';fitText(x,title,'700 #px system-ui,sans-serif',cw*.86,W*.09);x.fillText(title,W/2,b+chh*.55);
+  x.fillStyle=acc;fitText(x,sub,'500 #px system-ui,sans-serif',cw*.86,W*.035);x.fillText(sub,W/2,b+chh*.55+W*.065);
+  const cl=clips().slice(0,3);cl.forEach((im,i)=>{const s=W*.26,px=W/2+(i-(cl.length-1)/2)*s*.85-s/2;x.save();x.translate(0,0);contain(x,im,px,b-s*.62,s,s);x.restore()});
+ }
+}
+['mkKind','mkSize','mkBg','mkAcc'].forEach(i=>$(i).onchange=drawMock);['mkTitle','mkSub'].forEach(i=>$(i).oninput=drawMock);
+$('mkGo').onclick=()=>{buildPat();drawMock()};
+let mkN=1;$('mkAdd').onclick=async()=>{drawMock();basketAdd('preview-'+$('mkKind').value+'-'+(mkN++)+'.jpg',await setDpi(await toBlob($('mockCanvas'),'image/jpeg',.92),300))};
+
+/* ===== init ===== */
+applyPreset();buildPat();drawPat();
+/* ===== projects (IndexedDB) ===== */
+const DB={open(){return new Promise((res,rej)=>{if(DB.db)return res(DB.db);const r=indexedDB.open('artstudio',1);r.onupgradeneeded=()=>r.result.createObjectStore('projects',{keyPath:'id'});r.onsuccess=()=>{DB.db=r.result;res(DB.db)};r.onerror=()=>rej(r.error)})},
+ async tx(mode,fn){const db=await DB.open();return new Promise((res,rej)=>{const t=db.transaction('projects',mode),s=t.objectStore('projects'),q=fn(s);t.oncomplete=()=>res(q&&q.result);t.onerror=()=>rej(t.error)})},
+ all(){return DB.tx('readonly',s=>s.getAll())},put(p){return DB.tx('readwrite',s=>s.put(p))},del(id){return DB.tx('readwrite',s=>s.delete(id))}};
+const PATCTL=['patPreset','patPal','patLayout','patN','patSize','patRot','patBg','patIn','patDpi'],PATCHK=['patFill','patFlip'];
+function snapProject(name){
+ const pc={};PATCTL.forEach(i=>{if($(i))pc[i]=$(i).value});PATCHK.forEach(i=>{if($(i))pc[i]=$(i).checked});pc.seed=pat.seed;
+ const sh={};['shType','shLang','shTheme','shStyle','shN'].forEach(i=>{if($(i))sh[i]=$(i).value});sh.comm=$('shComm')?.checked;sh.desc=$('shDesc')?.value||'';
+ return{id:Date.now().toString(36),name,ts:Date.now(),img:refCanvasSrc.toDataURL('image/jpeg',.88),palette,stSteps,stIdx,stDone:[...stDone],stType:$('stType').value,stLevel:$('stLevel').value,stProg:$('stProg').value,view,gs,pat:pc,shop:sh};
+}
+async function openProject(p){
+ const img=await loadImg(p.img);refImg=img;refCanvasSrc=fitDraw(img,1000);palette=p.palette||getPalette(refCanvasSrc,8);palFocus=0;
+ Object.assign(gs,p.gs||{});view=p.view||'orig';
+ $('stType').value=p.stType||'char';$('stLevel').value=p.stLevel||'n';$('stProg').value=p.stProg||'krita';
+ stSteps=p.stSteps||null;stIdx=p.stIdx||0;stDone=new Set(p.stDone||[]);
+ document.querySelectorAll('#viewBtns button').forEach(b=>b.classList.toggle('on',b.dataset.v===view));
+ $('palN').value=Math.min(24,Math.max(4,palette.length));$('palNv').textContent=$('palN').value;
+ viewOpts();drawPalette();renderStep();renderRef();
+ const pc=p.pat||{};PATCTL.forEach(i=>{if($(i)&&pc[i]!=null)$(i).value=pc[i]});PATCHK.forEach(i=>{if($(i)&&pc[i]!=null)$(i).checked=pc[i]});if(pc.seed)pat.seed=pc.seed;
+ try{drawChips();buildPat();drawPat()}catch{}
+ const sh=p.shop||{};['shType','shLang','shTheme','shStyle','shN'].forEach(i=>{if($(i)&&sh[i]!=null)$(i).value=sh[i]});if($('shComm'))$('shComm').checked=!!sh.comm;if($('shDesc'))$('shDesc').value=sh.desc||'';
+ document.querySelector('#tabs button[data-t="ref"]').click();toast('Проект «'+p.name+'» открыт');
+}
+async function drawProjects(){
+ const L=$('prList');L.innerHTML='';let a=[];try{a=await DB.all()}catch{L.textContent='Браузер не даёт хранить проекты (приватный режим?).';return}
+ if(!a.length){L.innerHTML='<p class="muted">Проектов пока нет.</p>';return}
+ a.sort((x,y)=>y.ts-x.ts).forEach(p=>{
+  const c=document.createElement('div');c.className='card';c.style.margin='0';
+  const im=new Image();im.src=p.img;im.style.cssText='width:100%;height:110px;object-fit:cover;border-radius:6px';
+  const t=document.createElement('b');t.textContent=p.name;t.style.display='block';
+  const d=document.createElement('span');d.className='muted';d.textContent=new Date(p.ts).toLocaleDateString('ru-RU')+' · шагов выполнено: '+(p.stDone||[]).length;
+  const r=document.createElement('div');r.className='row';r.style.marginTop='6px';
+  const o=document.createElement('button');o.textContent='Открыть';o.onclick=()=>openProject(p).catch(e=>toast(e.message));
+  const x=document.createElement('button');x.textContent='Удалить';x.onclick=async()=>{if(x.dataset.s!=='1'){x.dataset.s='1';x.textContent='Точно?';setTimeout(()=>{x.dataset.s='';x.textContent='Удалить'},3000);return}await DB.del(p.id);drawProjects()};
+  r.append(o,x);c.append(im,t,d,r);L.appendChild(c);
+ });
+}
+$('prSave').onclick=async()=>{
+ if(!refCanvasSrc)return toast('Сначала загрузите референс');
+ const name=$('prName').value.trim()||('Проект '+new Date().toLocaleDateString('ru-RU'));
+ try{await DB.put(snapProject(name));$('prName').value='';drawProjects();toast('Проект сохранён')}catch(e){toast('Не удалось сохранить: '+(e.message||e))}
+};
+$('prExport').onclick=async()=>{const a=await DB.all().catch(()=>[]);if(!a.length)return toast('Нет проектов');saveBlob(new Blob([JSON.stringify({v:1,projects:a})],{type:'application/json'}),'masterskaya-projects.json')};
+$('prImport').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const j=JSON.parse(await f.text());for(const p of j.projects||[]){p.id=p.id||Date.now().toString(36);await DB.put(p)}drawProjects();toast('Проекты восстановлены')}catch{toast('Это не файл с проектами')}e.target.value=''};
+document.querySelector('#tabs').addEventListener('click',e=>{if(e.target.dataset?.t==='proj')drawProjects()});
+drawProjects();
+
+/* ===== shop texts ===== */
+const cap=s=>s.replace(/\b([a-zа-яё])/gi,m=>m.toUpperCase());
+const cut=(s,n)=>{if(s.length<=n)return s;const t=s.slice(0,n+1),i=t.lastIndexOf(' ');return(i>20?t.slice(0,i):t.slice(0,n)).replace(/[,|\-\s]+$/,'')};
+const SH={
+ en:{noun:{clip:'Clipart',paper:'Digital Paper',pat:'Seamless Pattern',bundle:'Clipart and Digital Paper Bundle'},
+  what:{clip:'PNG clipart with transparent background, 300 DPI',paper:'Digital paper, 12 x 12 inch (3600 x 3600 px), 300 DPI',pat:'Seamless tiles, 12 x 12 inch (3600 x 3600 px), 300 DPI, repeat without visible seams',bundle:'PNG clipart with transparent background and digital papers, 300 DPI'},
+  use:{clip:'Scrapbooking, card making, invitations, planners, stickers, party decor, classroom materials, digital crafts.',paper:'Scrapbooking, printable backgrounds, invitations, packaging, planners, digital crafts.',pat:'Backgrounds, packaging, wrapping paper, fabric and wallpaper mockups, digital crafts.',bundle:'Scrapbooking, card making, invitations, planners, stickers, backgrounds, digital crafts.'},
+  tags:{clip:['clipart','png clipart','digital download','instant download','transparent png','{t} clipart','{s} clipart','{t} png','kids clipart','scrapbook','card making','planner stickers','digital graphics','craft supplies'],paper:['digital paper','scrapbook paper','printable paper','digital download','instant download','{t} paper','{s} paper','paper pack','12x12 paper','junk journal','card making','background','seamless pattern'],pat:['seamless pattern','digital pattern','surface design','{t} pattern','{s} pattern','digital paper','tileable','repeat pattern','instant download','digital download','scrapbook','sublimation','wallpaper'],bundle:['clipart','digital paper','digital download','instant download','png clipart','scrapbook paper','{t} clipart','{t} paper','{s} bundle','seamless pattern','card making','planner','craft supplies']},
+  title(o){return[`${o.T} ${o.noun}, ${o.S} Style, ${o.n} ${o.fmt} Files, 300 DPI, Instant Download${o.comm?', Commercial Use':''}`,`${o.S} ${o.T} ${o.noun} Set | ${o.n} High Resolution Files | Digital Download${o.comm?' | Commercial Use':''}`,`${o.T} ${o.noun} - ${o.S} Printable Digital Download, ${o.n} Files, Instant Access`]},
+  desc(o){return`${o.T} ${o.noun} (${o.S})\n\nWHAT YOU GET\n- ${o.n} files (${o.fmt})\n- ${o.what}\n- Instant digital download. No physical item will be shipped.\n\nIDEAS FOR USE\n${o.use}\n\nHOW TO DOWNLOAD\nAfter purchase, open your Purchases page on the marketplace and download the files. Unzip the archive before use.\n\nLICENSE\n${o.comm?'Commercial use is allowed for your finished products. You may not resell, share or redistribute the files themselves, in whole or in part. Please read the license terms in this listing.':'For personal use only. Commercial use, resale or redistribution of the files is not allowed.'}\n\nGOOD TO KNOW\nColors may look different on screens and printers. Thank you for visiting my shop!`}},
+ ru:{noun:{clip:'Клипарты',paper:'Цифровая бумага',pat:'Бесшовные паттерны',bundle:'Набор клипартов и цифровой бумаги'},
+  what:{clip:'PNG-клипарты на прозрачном фоне, 300 dpi',paper:'Цифровая бумага 12 x 12 дюймов (3600 x 3600 px), 300 dpi',pat:'Бесшовные плитки 12 x 12 дюймов (3600 x 3600 px), 300 dpi, повторяются без видимых швов',bundle:'PNG-клипарты на прозрачном фоне и цифровая бумага, 300 dpi'},
+  use:{clip:'Скрапбукинг, открытки, приглашения, планеры, стикеры, украшение праздников, материалы для занятий.',paper:'Скрапбукинг, фоны для печати, приглашения, упаковка, планеры.',pat:'Фоны, упаковка, оберточная бумага, макеты тканей и обоев.',bundle:'Скрапбукинг, открытки, приглашения, планеры, стикеры, фоны.'},
+  tags:{clip:['клипарт','png клипарт','цифровой товар','скачать сразу','прозрачный png','{t} клипарт','{s} клипарт','детский клипарт','скрапбукинг','открытки','стикеры','планер','дизайн'],paper:['цифровая бумага','бумага скрапбукинг','печатная бумага','цифровой товар','скачать сразу','{t} бумага','{s} бумага','фон','паттерн','бесшовный','открытки','планер','набор бумаг'],pat:['бесшовный паттерн','цифровой паттерн','паттерн','{t} паттерн','{s} паттерн','цифровая бумага','принт','текстиль','обои','скачать сразу','упаковка','скрапбукинг','дизайн'],bundle:['клипарт','цифровая бумага','цифровой товар','скачать сразу','png клипарт','бумага','{t} клипарт','{s} набор','паттерн','открытки','планер','стикеры','дизайн']},
+  title(o){return[`${o.T} ${o.noun}, стиль ${o.S}, ${o.n} файлов ${o.fmt}, 300 dpi, мгновенное скачивание${o.comm?', коммерческое использование':''}`,`${o.noun} ${o.T} (${o.S}), ${o.n} файлов высокого разрешения, цифровой товар`,`${o.T}: ${o.noun.toLowerCase()} в стиле ${o.S}, для печати и творчества, ${o.n} файлов`]},
+  desc(o){return`${o.T}: ${o.noun} (${o.S})\n\nЧТО ВЫ ПОЛУЧИТЕ\n- ${o.n} файлов (${o.fmt})\n- ${o.what}\n- Цифровой товар, скачивается сразу после оплаты. Физический товар не отправляется.\n\nГДЕ ПРИГОДИТСЯ\n${o.use}\n\nКАК СКАЧАТЬ\nПосле покупки откройте раздел покупок на площадке и скачайте файлы. Перед использованием распакуйте архив.\n\nЛИЦЕНЗИЯ\n${o.comm?'Коммерческое использование разрешено для ваших готовых изделий. Перепродавать, передавать и распространять сами файлы целиком или частями нельзя. Прочитайте условия лицензии в этом объявлении.':'Только для личного использования. Коммерческое использование, перепродажа и распространение файлов не разрешены.'}\n\nВАЖНО\nЦвета на экране и при печати могут отличаться. Спасибо за визит в мой магазин!`}}
+};
+function shopFiles(){const f=basket.filter(b=>!/\.zip$/i.test(b.name));return{n:f.length,fmt:[...new Set(f.map(b=>b.name.split('.').pop().toUpperCase()))].join('/')}}
+function genShop(){
+ const L=SH[$('shLang').value],type=$('shType').value,bf=shopFiles();
+ const theme=$('shTheme').value.trim()||'Cute Animals',style=$('shStyle').value.trim()||'Cute',n=+$('shN').value||bf.n||12;
+ if(bf.n&&!$('shN').dataset.touched)$('shN').value=bf.n;
+ const en=$('shLang').value==='en',o={T:en?cap(theme):theme,S:en?cap(style):style,n:bf.n&&!$('shN').dataset.touched?bf.n:n,fmt:bf.fmt||(type==='paper'?'JPG/PNG':'PNG'),noun:L.noun[type],what:L.what[type],use:L.use[type],comm:$('shComm').checked};
+ const box=$('shTitles');box.innerHTML='';
+ L.title(o).map(t=>cut(t,140)).forEach(t=>{const d=document.createElement('div');d.className='step';const a=document.createElement('div');a.textContent=t;const r=document.createElement('div');r.className='row';r.style.margin='4px 0 0';const m=document.createElement('span');m.className='muted';m.textContent=t.length+'/140';const b=document.createElement('button');b.textContent='Копировать';b.onclick=()=>copyText(t);r.append(m,b);d.append(a,r);box.appendChild(d)});
+ $('shDesc').value=L.desc(o);
+ const t1=theme.toLowerCase(),s1=style.toLowerCase(),seen=new Set(),tags=[];
+ for(let tg of L.tags[type]){tg=tg.replace('{t}',t1).replace('{s}',s1);if(tg.length>20)tg=tg.replace(t1,t1.split(' ')[0]).replace(s1,s1.split(' ')[0]);if(tg.length>20||seen.has(tg))continue;seen.add(tg);tags.push(tg);if(tags.length===13)break}
+ const tb=$('shTags');tb.innerHTML='';tags.forEach(tg=>{const b=document.createElement('button');b.textContent=tg;b.style.minHeight='34px';b.onclick=()=>copyText(tg);tb.appendChild(b)});tb.dataset.v=tags.join(', ');
+}
+$('shN').oninput=()=>{$('shN').dataset.touched='1'};
+$('shGo').onclick=genShop;
+$('shCopyD').onclick=()=>copyText($('shDesc').value);
+$('shCopyT').onclick=()=>{const v=$('shTags').dataset.v;if(!v)return toast('Сначала нажмите «Составить»');copyText(v)};
+$('shAi').onclick=async()=>{
+ const b=$('shAi');
+ try{if(!$('shDesc').value.trim())genShop();const p=profSel();b.disabled=true;toast('ИИ улучшает описание…',4000);
+  const out=await askAI(p,'Улучши текст описания цифрового товара для маркетплейса: сделай его теплее и понятнее, сохрани структуру, язык и ВСЕ факты. Ничего не выдумывай (не добавляй функций, размеров, количеств и условий лицензии, которых нет в тексте). Верни только готовый текст.\n\n'+$('shDesc').value,false);
+  if(out.trim())$('shDesc').value=out.trim();toast('Готово')}
+ catch(e){toast('ИИ: '+e.message,4000)}finally{b.disabled=false}
+};
+genShop();
+
+/* ===== share & install & offline ===== */
+async function shareBasket(){
+ if(!basket.length)return toast('Набор пуст');
+ const files=basket.map(b=>new File([b.blob],b.name,{type:b.blob.type||'application/octet-stream'}));
+ try{if(navigator.canShare&&navigator.canShare({files})){await navigator.share({files,title:'Мастерская'});return}}catch(e){if(e.name==='AbortError')return}
+ toast('Меню «Отправить» недоступно здесь. Скачайте ZIP.');
+}
+(()=>{const z=$('zipBtn'),b=document.createElement('button');b.textContent='Отправить';b.id='shareBtn';b.onclick=shareBasket;z.after(b)})();
+let installEv=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEv=e;$('instBtn').hidden=false});
+$('instBtn').onclick=async()=>{if(!installEv)return;installEv.prompt();await installEv.userChoice.catch(()=>{});installEv=null;$('instBtn').hidden=true};
+window.addEventListener('appinstalled',()=>{$('instBtn').hidden=true;toast('Приложение установлено')});
+if('serviceWorker'in navigator&&/^https?:$/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+/* collapsible basket */
+(()=>{const d=document.querySelector('.drawer'),h=document.querySelector('#basket>.row:first-child');d.classList.add('min');
+ const t=h.querySelector('b');const upd=()=>{t.textContent='Набор для экспорта '+(d.classList.contains('min')?'▴':'▾')};upd();
+ h.setAttribute('role','button');h.tabIndex=0;h.onclick=()=>{d.classList.toggle('min');upd()};h.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();h.onclick()}}})();
+</script></body></html>
