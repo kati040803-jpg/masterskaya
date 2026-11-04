@@ -82,6 +82,7 @@ textarea{font:inherit;color:var(--fg);background:var(--card);border:1px solid va
    </div>
    <div class="row" id="viewOpts"></div>
    <canvas id="refCanvas" width="800" height="500"></canvas>
+   <div class="row" id="refExport"><button id="refDl" class="btn primary">Скачать этот вид</button><button id="refBasket">В набор</button><button id="refAll">Скачать все 6 видов</button></div>
    <p class="muted" id="refInfo">Загрузите референс, и справа появятся палитра и шаги.</p>
   </div>
   <div>
@@ -91,7 +92,7 @@ textarea{font:inherit;color:var(--fg);background:var(--card);border:1px solid va
     <p class="muted">Нажмите на цвет или оттенок, чтобы скопировать код. Под каждым цветом четыре оттенка: тень, глубокая тень, свет, блик.</p>
     <div id="palMore"></div>
     <div class="row"><input type="text" id="serName" placeholder="Название серии" style="flex:1;min-width:120px"><button id="serSave">Сохранить палитру серии</button></div>
-    <div class="row"><button id="palCopy">Скопировать коды</button><button id="palGpl">Файл для Krita (.gpl)</button><button id="palPng">Карточка PNG</button></div>
+    <div class="row"><button id="palCopy">Скопировать коды</button><button id="palGpl">Файл палитры (.gpl)</button><button id="palPng">Карточка PNG</button></div>
     <p class="muted">Карточку PNG откройте в программе как референс и берите цвета пипеткой: так работает в любом приложении.</p>
    </div>
    <div class="card"><h2>Пошаговый разбор</h2>
@@ -143,6 +144,7 @@ textarea{font:inherit;color:var(--fg);background:var(--card);border:1px solid va
   <div class="card">
    <div class="row"><label>Элементы (PNG с прозрачным фоном) <input type="file" id="patFiles" accept="image/*" multiple></label></div>
    <div class="thumbs" id="patThumbs"></div>
+   <p class="muted">Элементы — это отдельные мотивы на прозрачном фоне. На планшете: ibis Paint X → новый холст 2000×2000, фон прозрачный, рисуете один мотив, «Экспорт PNG» → загружаете сюда. Ничего никуда переносить не нужно: рисуйте там, где удобно.</p>
    <div class="row" style="margin-top:8px"><button id="patUsePrep">Взять рисунок из «Подготовки»</button><button id="patClear">Очистить</button></div>
    <canvas id="patCanvas" width="900" height="900"></canvas>
    <div class="row" style="margin-top:8px"><label><input type="checkbox" id="patSeam"> показать стыки плиток</label></div>
@@ -214,8 +216,8 @@ textarea{font:inherit;color:var(--fg);background:var(--card);border:1px solid va
 
 <section id="t-set" hidden>
  <div class="card"><h2>Хранилище ключей</h2>
-  <p class="muted">Ключи шифруются вашим паролем (AES-256) и лежат только в браузере этого планшета. Через 15 минут без действий хранилище закрывается. Пароль нигде не сохраняется: если забудете, ключи придётся ввести заново.</p>
-  <div class="row"><input type="password" id="vaultPw" placeholder="Пароль хранилища" autocomplete="off"><button id="vaultOpen" class="btn primary">Открыть</button><button id="vaultLock">Закрыть</button><button id="vaultWipe">Стереть всё</button></div>
+  <p class="muted"><b>Это не пароль от аккаунта и не пароль от Aizor — его придумываете вы сами.</b> Он нужен только для одного: зашифровать ваши API-ключи в памяти этого браузера. Первый раз: впишите любой пароль от 6 символов и нажмите «Создать хранилище» — оно создастся с этим паролем. Дальше вводите тот же пароль и нажимаете «Открыть». Пароль нигде не сохраняется, поэтому запишите его себе. Через 15 минут без действий хранилище закрывается само.</p>
+  <div class="row"><input type="password" id="vaultPw" placeholder="Придумайте пароль (6+ символов)" autocomplete="off"><button id="vaultOpen" class="btn primary">Создать хранилище</button><button id="vaultLock">Закрыть</button><button id="vaultWipe">Стереть всё</button></div>
   <p id="vaultState" class="muted"></p>
  </div>
  <div class="card" id="profForm"><h2>Добавить профиль модели</h2>
@@ -362,7 +364,7 @@ function drawHarmony(){
 }
 function flatPalette(){const a=[];palette.forEach((p,i)=>{a.push([p.hex,'цвет '+(i+1)]);(p.shades||[]).forEach(x=>a.push([x[1],'цвет '+(i+1)+' '+x[0]]))});return a}
 $('palCopy').onclick=()=>{if(!palette.length)return toast('Нет палитры');copyText(palette.map(p=>p.hex.toUpperCase()).join(' '))};
-$('palGpl').onclick=()=>{if(!palette.length)return toast('Нет палитры');const nm=$('serName').value.trim()||'Masterskaya';let t='GIMP Palette\nName: '+nm+'\nColumns: 5\n#\n';flatPalette().forEach(([h,n])=>{const[r,g,b]=hexRgb(h);t+=String(r).padStart(3)+' '+String(g).padStart(3)+' '+String(b).padStart(3)+'\t'+n+' '+h.toUpperCase()+'\n'});saveBlob(new Blob([t],{type:'text/plain'}),'palette.gpl');toast('Файл palette.gpl скачан: в Krita откройте Наборы палитр → Импорт')};
+$('palGpl').onclick=()=>{if(!palette.length)return toast('Нет палитры');const nm=$('serName').value.trim()||'Masterskaya';let t='GIMP Palette\nName: '+nm+'\nColumns: 5\n#\n';flatPalette().forEach(([h,n])=>{const[r,g,b]=hexRgb(h);t+=String(r).padStart(3)+' '+String(g).padStart(3)+' '+String(b).padStart(3)+'\t'+n+' '+h.toUpperCase()+'\n'});saveBlob(new Blob([t],{type:'text/plain'}),'palette.gpl');toast('palette.gpl скачан. В Krita: Наборы палитр → Импорт. В ibis Paint X палитру набирайте из карточки PNG')};
 $('palPng').onclick=async()=>{
  if(!palette.length)return toast('Нет палитры');
  const n=palette.length,cw=200,W=cw*n,H=520,c=mkCanvas(W,H),x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);x.textAlign='center';x.font='bold 22px system-ui';
@@ -401,15 +403,15 @@ function viewOpts(){
  if(view==='persp'){const s=document.createElement('select');[[1,'1 точка схода'],[2,'2 точки схода'],[3,'3 точки схода']].forEach(([v,t])=>{const op=new Option(t,v);if(v===gs.persp.type)op.selected=true;s.add(op)});
   s.onchange=()=>{gs.persp.type=+s.value;renderRef()};o.append(s);const p=document.createElement('span');p.className='muted';p.textContent='Тяните горизонт и точки пальцем';o.append(p)}
 }
-function renderRef(){
- if(!refCanvasSrc)return;
- const c=$('refCanvas'),W=refCanvasSrc.width,H=refCanvasSrc.height;c.width=W;c.height=H;const x=c.getContext('2d');
- x.drawImage(refCanvasSrc,0,0);
+function renderRef(){if(!refCanvasSrc)return;drawView($('refCanvas'),refCanvasSrc,false)}
+function drawView(c,src,silent){
+ const W=src.width,H=src.height;c.width=W;c.height=H;const x=c.getContext('2d');
+ x.drawImage(src,0,0);
  if(view==='orig')return;
  const id=x.getImageData(0,0,W,H),d=id.data;
  if(view==='gray'){const L=gs.levels;for(let i=0;i<d.length;i+=4){const g=lum(d[i],d[i+1],d[i+2])/255;const q=Math.min(L-1,Math.floor(g*L))/(L-1)*255;d[i]=d[i+1]=d[i+2]=q}x.putImageData(id,0,0)}
  else if(view==='blobs'){
-  const w=gs.detail,h=Math.max(1,Math.round(w*H/W)),sc=mkCanvas(w,h),sx=sc.getContext('2d');sx.drawImage(refCanvasSrc,0,0,w,h);
+  const w=gs.detail,h=Math.max(1,Math.round(w*H/W)),sc=mkCanvas(w,h),sx=sc.getContext('2d');sx.drawImage(src,0,0,w,h);
   const sd=sx.getImageData(0,0,w,h),a=sd.data;
   for(let i=0;i<a.length;i+=4){let bi=0,bd=1e9;for(let j=0;j<palette.length;j++){const p=palette[j].rgb,dd=(a[i]-p[0])**2+(a[i+1]-p[1])**2+(a[i+2]-p[2])**2;if(dd<bd){bd=dd;bi=j}}const p=palette[bi]?.rgb||[0,0,0];a[i]=p[0];a[i+1]=p[1];a[i+2]=p[2];a[i+3]=255}
   sx.putImageData(sd,0,0);x.imageSmoothingEnabled=false;x.drawImage(sc,0,0,W,H);
@@ -430,11 +432,11 @@ function renderRef(){
   x.font='bold '+fs+'px system-ui';x.textBaseline='top';
   for(let i=0;i<gs.cols;i++){const t=String.fromCharCode(65+i%26)+(i>=26?'2':'');x.fillStyle='#000';x.fillText(t,i*cs+4,3);x.fillStyle='#fff';x.fillText(t,i*cs+3,2)}
   for(let j=0;j<rows;j++){x.fillStyle='#000';x.fillText(j+1,4,j*cs+fs+4);x.fillStyle='#fff';x.fillText(j+1,3,j*cs+fs+3)}
-  $('refInfo').textContent='Клетка: '+Math.round(cs)+' px на референсе, сетка '+gs.cols+'×'+rows+'. Расчертите такую же сетку в Krita (Вид → Показать → Сетка) и переносите по клеткам.';
+  if(!silent)$('refInfo').textContent='Клетка: '+Math.round(cs)+' px на референсе, сетка '+gs.cols+'×'+rows+'. Такую же сетку расчертите у себя: в ibis Paint X — слой «Тетрадь» или «Сетка» в настройках холста, в Krita — Вид → Показать → Сетка. Дальше переносите по клеткам.';
  }
- else if(view==='sketch'){x.fillStyle='#fff';x.fillRect(0,0,W,H);if(gs.skGhost){x.globalAlpha=.22;x.drawImage(refCanvasSrc,0,0);x.globalAlpha=1}x.drawImage(makeSketch(refCanvasSrc,gs.skBlur,gs.skSens,gs.skThick,gs.skCol),0,0);
-  $('refInfo').textContent='Эскиз для обводки. «Упрощение» убирает мелкие линии, «Чувствительность» делает линии чётче. В набор уйдёт PNG с прозрачным фоном: положите его слоем и обводите.'}
- else if(view==='persp')drawPersp(x,W,H);
+ else if(view==='sketch'){x.fillStyle='#fff';x.fillRect(0,0,W,H);if(gs.skGhost){x.globalAlpha=.22;x.drawImage(src,0,0);x.globalAlpha=1}x.drawImage(makeSketch(src,gs.skBlur,gs.skSens,gs.skThick,gs.skCol),0,0);
+  if(!silent)$('refInfo').textContent='Эскиз для обводки. «Упрощение» убирает мелкие линии, «Чувствительность» делает линии чётче. В набор уйдёт PNG с прозрачным фоном: положите его слоем и обводите.'}
+ else if(view==='persp')drawPersp(x,W,H,silent);
 }
 function makeSketch(src,blur,sens,thick,col){
  const W=src.width,H=src.height,k=W/1000,t=mkCanvas(W,H),tx=t.getContext('2d');tx.filter=blur>0?'blur('+(blur*k)+'px)':'none';tx.drawImage(src,0,0);tx.filter='none';
@@ -444,6 +446,31 @@ function makeSketch(src,blur,sens,thick,col){
  ox.putImageData(od,0,0);
  const r=thick*k;if(r<.6)return o;const f=mkCanvas(W,H),fx=f.getContext('2d');for(let q=0;q<12;q++){const an=q/12*Math.PI*2;fx.drawImage(o,Math.cos(an)*r,Math.sin(an)*r)}fx.drawImage(o,0,0);return f;
 }
+const VIEWFILE={gray:'chb-svet',blobs:'pyatna',edges:'kontury',sketch:'eskiz',grid:'kletki',persp:'perspektiva',orig:'original'};
+let vExpN=1;
+async function exportView(toBasket){
+ if(!refImg)return toast('Сначала загрузите референс');
+ const nom=(VIEWFILE[view]||view)+'-'+String(vExpN++).padStart(2,'0')+'.png';
+ toast('Готовлю '+nom+'…',3000);await new Promise(r=>setTimeout(r,30));
+ const src=fitDraw(refImg,1800),oc=mkCanvas(src.width,src.height);
+ drawView(oc,src,true);
+ const b=await setDpi(await toBlob(oc),300);
+ if(toBasket)basketAdd(nom,b);else saveBlob(b,nom);
+}
+async function exportAllViews(){
+ if(!refImg)return toast('Сначала загрузите референс');
+ const old=view,src=fitDraw(refImg,1800);
+ toast('Собираю 6 файлов, это несколько секунд…',4000);
+ for(const v of ['gray','blobs','edges','sketch','grid','persp']){
+  view=v;const oc=mkCanvas(src.width,src.height);drawView(oc,src,true);
+  saveBlob(await setDpi(await toBlob(oc),300),VIEWFILE[v]+'-'+String(vExpN++).padStart(2,'0')+'.png');
+  await new Promise(r=>setTimeout(r,500));
+ }
+ view=old;renderRef();toast('Готово: 6 файлов в «Загрузках»');
+}
+$('refDl').onclick=()=>exportView(false);
+$('refBasket').onclick=()=>exportView(true);
+$('refAll').onclick=exportAllViews;
 let skN=1;
 async function addSketch(download){
  if(!refImg)return toast('Загрузите референс');
@@ -452,7 +479,7 @@ async function addSketch(download){
  const b=await setDpi(await toBlob(out),300);if(download===true)saveBlob(b,'sketch.png');else basketAdd('sketch-'+String(skN++).padStart(2,'0')+'.png',b);
 }
 function perspPts(W,H){const p=gs.persp;return{hy:p.hy*H,v1:[p.v1*W,p.hy*H],v2:[p.v2*W,p.hy*H],v3:[p.v3x*W,p.v3y*H]}}
-function drawPersp(x,W,H){
+function drawPersp(x,W,H,silent){
  x.fillStyle='rgba(255,255,255,.35)';x.fillRect(0,0,W,H);
  const P=perspPts(W,H),t=gs.persp.type,R=W/90;
  x.lineWidth=Math.max(1,W/600);
@@ -482,7 +509,7 @@ char:[
  {t:'Эскиз из простых форм',d:'Новым слоем одной тонкой кистью обозначьте голову кругом, тело овалом или грушей, лапы и руки цилиндрами. Не рисуйте детали.',n:'У детских персонажей голова обычно крупная, примерно треть высоты фигуры. Это даёт «милый» вид.'},
  {t:'Уточнение силуэта',d:'Снизьте непрозрачность эскиза и обведите уточнённый контур: уши, хвост, позу. Проверьте, читается ли персонаж, если залить его чёрным.',n:'Хороший силуэт узнаётся даже без лица и цвета.'},
  {t:'Лицо и мелкие формы',d:'Глаза расставьте широко и низко на голове, нос и рот маленькие. Добавьте щёчки.',n:'Чем ниже и шире глаза, тем детскее выглядит персонаж.'},
- {t:'Чистовая линия',d:'Новый слой, кисть с нажимом или ровная линия. Обводите уверенно, длинными штрихами. Линию можно сделать цветной вместо чёрной, это выглядит мягче.',n:'Если линия дрожит, включите стабилизацию кисти в Krita (панель инструментов кисти, «Сглаживание»).'},
+ {t:'Чистовая линия',d:'Новый слой, кисть с нажимом или ровная линия. Обводите уверенно, длинными штрихами. Линию можно сделать цветной вместо чёрной, это выглядит мягче.',n:'Если линия дрожит, включите стабилизацию штриха: в ibis Paint X она в настройках кисти, в Krita называется «Сглаживание» (Smoothing).'},
  {t:'Плоская заливка',d:'Под слоем линий создайте слой на каждую крупную область (кожа/шерсть, одежда, фон). Заливайте инструментом «Заливка» с включённым ростом области 1-2 px. Основные цвета: {pal}.',n:'Отдельные слои цветов позволят потом менять окраску за секунды.'},
  {t:'Тени',d:'Над заливкой создайте слой с режимом «Умножение». Мягкой кистью добавьте тень с одной стороны от источника света, цвет возьмите из тёмных тонов: {dark}.',n:'Свет сверху-слева, значит, тень снизу-справа. Держите одну сторону для всего набора.'},
  {t:'Блики и румянец',d:'Слой с режимом «Экран» или «Добавление»: блики в глазах, на носу, на щеках. Светлые тона: {light}.',n:'Блик в глазу придаёт взгляду жизнь. Достаточно одной белой точки.'},
@@ -508,8 +535,8 @@ clip:[
  {t:'Экспорт и подготовка',d:'PNG с прозрачным фоном, 300 dpi. Во вкладке «Подготовка» обрежьте поля и при желании добавьте белую обводку.',n:'Имена файлов лучше делать понятными: bear-01.png, bear-02.png.'}]
 };
 let stSteps=null,stIdx=0,stDone=new Set();
-const PROGN={krita:'Krita',penup:'PenUp',sketchbook:'Sketchbook',hipaint:'Hi Paint',infinite:'Infinite Painter',other:'вашей программе'};
-function progTip(){const p=$('stProg').value;if(p==='krita')return 'Krita: режимы слоя «Умножение» (Multiply) и «Экран» (Screen) выбираются в панели слоёв. Сетка: Вид → Показать → Сетка.';
+const PROGN={ibis:'ibis Paint X',hipaint:'Hi Paint',infinite:'Infinite Painter',sketchbook:'Sketchbook',penup:'PenUp',krita:'Krita',other:'вашей программе'};
+function progTip(){const p=$('stProg').value;if(p==='ibis')return 'ibis Paint X: режим слоя меняется в окне слоя — кнопка «Режим наложения», нужны «Умножение» (Multiply) и «Экран» (Screen). Сетка: «Слой» → «Наложение фона» → «Тетрадь».';if(p==='hipaint')return 'HiPaint: режим слоя — в панели слоёв, «Режим смешивания»: «Умножение» и «Экран». Сетку удобно держать отдельным слоем-подложкой.';if(p==='krita')return 'Krita: режимы слоя «Умножение» (Multiply) и «Экран» (Screen) выбираются в панели слоёв. Сетка: Вид → Показать → Сетка.';
  return 'В '+PROGN[p]+' названия могут отличаться: ищите в настройках слоя режимы Multiply («Умножение») и Screen («Экран»). Если слоёв мало, рисуйте тени и блики на одном слое, а цветные пятна объедините.'}
 try{const sp=localStorage.getItem('artstudio.prog');if(sp)$('stProg').value=sp}catch{}
 function palFill(s){
@@ -575,7 +602,9 @@ $('pAdd').onclick=async()=>{
 };
 function drawVault(){
  const st=readStore();
- $('vaultState').textContent=vault.key?'Открыто. Профилей: '+vault.profiles.length:(st?'Закрыто. Введите пароль.':'Ещё не создано. Введите новый пароль и нажмите «Открыть», хранилище создастся.');
+ $('vaultPw').placeholder=st?'Ваш пароль хранилища':'Придумайте пароль (6+ символов)';
+ $('vaultOpen').textContent=st?'Открыть':'Создать хранилище';
+ $('vaultState').textContent=vault.key?'Открыто. Профилей: '+vault.profiles.length:(st?'Хранилище уже создано. Введите свой пароль и нажмите «Открыть».':'Хранилища пока нет. Придумайте пароль от 6 символов, запишите его себе и нажмите «Создать хранилище».');
  const L=$('profList');L.innerHTML='';
  if(!vault.key)L.textContent='Хранилище закрыто.';
  else if(!vault.profiles.length)L.textContent='Профилей пока нет.';
@@ -807,7 +836,7 @@ function snapProject(name){
 async function openProject(p){
  const img=await loadImg(p.img);refImg=img;refCanvasSrc=fitDraw(img,1000);palette=p.palette||getPalette(refCanvasSrc,8);palFocus=0;
  Object.assign(gs,p.gs||{});view=p.view||'orig';
- $('stType').value=p.stType||'char';$('stLevel').value=p.stLevel||'n';$('stProg').value=p.stProg||'krita';
+ $('stType').value=p.stType||'char';$('stLevel').value=p.stLevel||'n';$('stProg').value=p.stProg||'ibis';
  stSteps=p.stSteps||null;stIdx=p.stIdx||0;stDone=new Set(p.stDone||[]);
  document.querySelectorAll('#viewBtns button').forEach(b=>b.classList.toggle('on',b.dataset.v===view));
  $('palN').value=Math.min(24,Math.max(4,palette.length));$('palNv').textContent=$('palN').value;
